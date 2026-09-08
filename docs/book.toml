@@ -1,0 +1,18 @@
+[book]
+title = "Hermes Android Kotlin SDK Book"
+authors = ["Aduki Org"]
+description = "Comprehensive developer guide and API reference for the high-performance Hermes Android Kotlin SDK."
+language = "en"
+multilingual = false
+src = "."
+
+[output.html]
+git-repository-url = "https://github.com/aduki-org/hermes"
+edit-url-template = "https://github.com/aduki-org/hermes/edit/main/KOTLIN/docs/{path}"
+default-theme = "rust"
+preferred-dark-theme = "coal"
+mathjax-support = false
+
+[output.html.fold]
+enable = true
+level = 1
