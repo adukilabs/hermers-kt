@@ -3,17 +3,13 @@ package pro.aduki.hermes.state.repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import pro.aduki.hermes.core.models.Identity
 
 /**
- * Identity models authenticated user and tenant state.
+ * Type alias to core Identity model.
  */
-data class Identity(
-    val user: String = "",
-    val tenant: String = "",
-    val owner: Boolean = false,
-    val scopes: List<String> = emptyList(),
-    val tier: String = ""
-)
+typealias Identity = pro.aduki.hermes.core.models.Identity
+
 
 /**
  * Tokens models interactive access and refresh session tokens.

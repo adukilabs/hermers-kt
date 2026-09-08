@@ -3,7 +3,7 @@ package pro.aduki.hermes.net.http
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import pro.aduki.hermes.core.errors.HermesException
-import pro.aduki.hermes.state.repository.Identity
+import pro.aduki.hermes.core.models.Identity
 
 /**
  * Whoami resolves and caches authenticated session identity via GET /auth/whoami.
