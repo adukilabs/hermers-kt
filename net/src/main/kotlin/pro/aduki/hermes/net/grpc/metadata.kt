@@ -12,7 +12,7 @@ class Credentials(private val key: String) : CallCredentials() {
     private val authKey = Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER)
 
     override fun applyRequestMetadata(
-        requestInfo: RequestInfo,
+        requestInfo: RequestInfo?,
         appExecutor: Executor,
         applier: MetadataApplier
     ) {
