@@ -162,3 +162,4 @@ client.totp("654321")
 // Revokes session on server and wipes encrypted tokens locally
 client.logout()
 ```
+
