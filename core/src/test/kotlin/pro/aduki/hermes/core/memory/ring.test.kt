@@ -34,3 +34,4 @@ class RingTest {
         assertTrue(ring.offer(3)) // Space freed
     }
 }
+

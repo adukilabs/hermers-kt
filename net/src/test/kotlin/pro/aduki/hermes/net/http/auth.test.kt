@@ -47,3 +47,4 @@ class AuthTest {
         assertEquals("Hermes-Android/1.0.0", recorded.getHeader("User-Agent"))
     }
 }
+

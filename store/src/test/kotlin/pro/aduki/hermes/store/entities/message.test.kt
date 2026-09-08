@@ -46,3 +46,4 @@ class MessageTest {
         assertEquals("alice@example.com", recipients[0])
     }
 }
+

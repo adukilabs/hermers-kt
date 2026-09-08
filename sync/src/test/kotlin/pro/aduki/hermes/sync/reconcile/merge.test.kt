@@ -32,3 +32,4 @@ class MergeTest {
         assertEquals(Message.FLAG_FLAGGED, merged)
     }
 }
+

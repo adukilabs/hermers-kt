@@ -32,3 +32,4 @@ class CircuitTest {
         assertEquals(Circuit.State.CLOSED, circuit.state())
     }
 }
+

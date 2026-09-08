@@ -33,3 +33,4 @@ class JitterTest {
         assertEquals(j1.next(), j2.next())
     }
 }
+

@@ -43,3 +43,4 @@ class HashTest {
         assertNotEquals(m1, m2)
     }
 }
+
