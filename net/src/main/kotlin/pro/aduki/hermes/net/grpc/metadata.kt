@@ -2,12 +2,13 @@ package pro.aduki.hermes.net.grpc
 
 import io.grpc.CallCredentials
 import io.grpc.Metadata
+import io.grpc.Status
 import java.util.concurrent.Executor
 
 /**
- * KeyCallCredentials attaches API key metadata to gRPC service invocations.
+ * Credentials attaches API key authorization metadata to all gRPC service calls.
  */
-class KeyCallCredentials(private val apiKey: String) : CallCredentials() {
+class Credentials(private val key: String) : CallCredentials() {
     private val authKey = Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER)
 
     override fun applyRequestMetadata(
@@ -18,14 +19,13 @@ class KeyCallCredentials(private val apiKey: String) : CallCredentials() {
         appExecutor.execute {
             try {
                 val headers = Metadata()
-                headers.put(authKey, "Key $apiKey")
+                headers.put(authKey, "Key $key")
                 applier.apply(headers)
             } catch (t: Throwable) {
-                applier.fail(io.grpc.Status.UNAUTHENTICATED.withCause(t))
+                applier.fail(Status.UNAUTHENTICATED.withCause(t))
             }
         }
     }
 
     override fun thisUsesUnstableApi() {}
 }
-

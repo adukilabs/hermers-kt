@@ -1,23 +1,32 @@
 package pro.aduki.hermes.net.http
 
+import okhttp3.CertificatePinner
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 /**
- * Factory for building high-performance OkHttpClient with connection pooling and timeouts.
+ * Client factory for building high-performance OkHttpClient with connection pooling.
  */
-object HttpClientFactory {
+object Client {
 
-    fun create(apiKey: String, timeoutSeconds: Long = 15): OkHttpClient {
-        return OkHttpClient.Builder()
+    fun create(
+        key: String,
+        timeout: Long = 15,
+        pinner: CertificatePinner? = null
+    ): OkHttpClient {
+        val builder = OkHttpClient.Builder()
             .connectionPool(ConnectionPool(maxIdleConnections = 8, keepAliveDuration = 5, TimeUnit.MINUTES))
-            .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
-            .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
-            .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
-            .addInterceptor(AuthInterceptor(apiKey))
+            .connectTimeout(timeout, TimeUnit.SECONDS)
+            .readTimeout(timeout, TimeUnit.SECONDS)
+            .writeTimeout(timeout, TimeUnit.SECONDS)
+            .addInterceptor(Auth(key))
             .retryOnConnectionFailure(true)
-            .build()
+
+        if (pinner != null) {
+            builder.certificatePinner(pinner)
+        }
+
+        return builder.build()
     }
 }
-

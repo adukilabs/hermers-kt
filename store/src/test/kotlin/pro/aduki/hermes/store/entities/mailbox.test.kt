@@ -27,3 +27,4 @@ class MailboxTest {
         assertEquals(5, mailbox.unseen)
     }
 }
+

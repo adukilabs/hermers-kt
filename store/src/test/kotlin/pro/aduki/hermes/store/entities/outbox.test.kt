@@ -22,3 +22,4 @@ class OutboxTest {
         assertEquals(payload.size, action.payload.size)
     }
 }
+

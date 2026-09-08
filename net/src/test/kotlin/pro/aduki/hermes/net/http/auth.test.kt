@@ -30,7 +30,7 @@ class AuthTest {
 
         val apiKey = "hm_live_abc123xyz789"
         val client = OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor(apiKey))
+            .addInterceptor(Auth(apiKey))
             .build()
 
         val request = Request.Builder()
@@ -47,4 +47,3 @@ class AuthTest {
         assertEquals("Hermes-Android/1.0.0", recorded.getHeader("User-Agent"))
     }
 }
-

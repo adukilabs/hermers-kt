@@ -24,3 +24,4 @@ class ContactTest {
         assertEquals("ctag_rev_3", contact.ctag)
     }
 }
+

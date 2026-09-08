@@ -21,3 +21,4 @@ class Holder(val store: BoxStore) : Closeable {
 
     fun closed(): Boolean = store.isClosed
 }
+
