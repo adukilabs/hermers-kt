@@ -90,8 +90,17 @@ dependencies {
 
 ### 1. Initialize Hermes SDK
 
-Initialize the client with your API key inside your `Application` class or DI module. The SDK initializes the encrypted ObjectBox store, resolves identity via `GET /auth/whoami`, and begins background synchronization.
+#### Option A: Interactive User Login (with optional 2FA / TOTP)
+```kotlin
+// In your Login ViewModel or Activity
+val hermes = HermesClient.login(
+    email = "user@aduki.pro",
+    password = "CorrectHorseBatteryStaple123!",
+    totp = "123456" // optional 6-digit TOTP code
+)
+```
 
+#### Option B: Headless / Daemon API Key
 ```kotlin
 class App : Application() {
     lateinit var hermes: HermesClient
@@ -100,11 +109,11 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        hermes = HermesClient.builder(applicationContext)
+        hermes = HermesClient.builder()
             .key("hm_live_7f9b8c2d1e0a4b5c6d7e8f9a0b1c2d3e")
             .endpoint("https://hermers.aduki.pro/v1")
-            .grpcEndpoint("grpc.aduki.pro", 443)
-            .secureStore(enabled = true) // Hardware-backed KeyStore encryption
+            .grpc("grpc.aduki.pro", 443)
+            .secure(true) // Hardware-backed KeyStore encryption
             .build()
     }
 }
@@ -151,6 +160,7 @@ viewModelScope.launch {
 
 Explore the in-depth architectural and technical specifications:
 
+- **[`LOGIN.md`](LOGIN.md)**: Interactive user authentication, 6-digit TOTP 2FA confirmation, session rotation, and KeyStore token security.
 - **[`PLAN.md`](PLAN.md)**: Phased implementation roadmap and multi-tiered test criteria matrix (server tests last).
 - **[`STRUCTURE.md`](STRUCTURE.md)**: Module hierarchy, directory layouts, and clean architecture layers.
 - **[`DESIGN.md`](DESIGN.md)**: Core design philosophy, zero-copy pipelines, coroutine threading, and battery optimization.
