@@ -30,3 +30,8 @@ grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref.grpcKotlin
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version = "8.3.2" }
+

@@ -16,21 +16,23 @@ This guide walks you through integrating the Hermes Android Kotlin SDK into your
 
 ## 2. Configure Repositories
 
-Ensure `google()` and `mavenCentral()` are declared in `settings.gradle.kts`:
+Add `mavenCentral()` and the JitPack repository to your `settings.gradle.kts`:
 
 ```kotlin
-pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+        // Or GitHub Packages:
+        // maven {
+        //     url = uri("https://maven.pkg.github.com/adukilabs/hermers-kt")
+        //     credentials {
+        //         username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
+        //         password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN")
+        //     }
+        // }
     }
 }
 ```
@@ -65,8 +67,11 @@ Add the Hermes SDK and related runtime libraries to `app/build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    // Hermes Android SDK Facade
-    implementation("pro.aduki.hermes:sdk:1.0.0")
+    // Hermes Android SDK Facade (JitPack)
+    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.0")
+
+    // Or via Maven Central / GitHub Packages:
+    // implementation("io.github.adukilabs:sdk:0.1.0")
 
     // ObjectBox Zero-Copy Persistent Engine
     implementation("io.objectbox:objectbox-kotlin:4.0.3")

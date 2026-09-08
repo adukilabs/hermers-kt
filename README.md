@@ -21,6 +21,31 @@ An ultra-low latency, battery-efficient, offline-first Android Kotlin SDK engine
 
 ---
 
+## Installation
+
+### 1. Add Repository (`settings.gradle.kts`)
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+### 2. Add Dependency (`app/build.gradle.kts`)
+
+```kotlin
+dependencies {
+    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.0")
+    implementation("io.objectbox:objectbox-android:4.0.3")
+}
+```
+
+---
+
 ## Quickstart
 
 ### 1. Interactive User Login
