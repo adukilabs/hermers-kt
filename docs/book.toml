@@ -6,8 +6,9 @@ language = "en"
 src = "."
 
 [output.html]
-git-repository-url = "https://github.com/aduki-org/hermes"
-edit-url-template = "https://github.com/aduki-org/hermes/edit/main/KOTLIN/docs/{path}"
+git-repository-url = "https://github.com/adukilabs/hermers-kt"
+edit-url-template = "https://github.com/adukilabs/hermers-kt/edit/main/docs/{path}"
+site-url = "/hermers-kt/"
 default-theme = "rust"
 preferred-dark-theme = "coal"
 mathjax-support = false

@@ -1,6 +1,6 @@
 # Hermes Android Kotlin SDK
 
-[![Documentation](https://img.shields.io/badge/docs-mdBook-blue.svg)](https://aduki-org.github.io/hermes/)
+[![Documentation](https://img.shields.io/badge/docs-mdBook-blue.svg)](https://adukilabs.github.io/hermers-kt/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.0-purple.svg)](https://kotlinlang.org)
 [![ObjectBox](https://img.shields.io/badge/ObjectBox-4.0.3-green.svg)](https://objectbox.io)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
