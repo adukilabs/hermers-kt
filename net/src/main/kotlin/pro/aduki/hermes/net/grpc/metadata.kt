@@ -11,11 +11,7 @@ import java.util.concurrent.Executor
 class Credentials(private val key: String) : CallCredentials() {
     private val authKey = Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER)
 
-    override fun applyRequestMetadata(
-        requestInfo: RequestInfo?,
-        appExecutor: Executor,
-        applier: MetadataApplier
-    ) {
+    fun apply(appExecutor: Executor, applier: MetadataApplier) {
         appExecutor.execute {
             try {
                 val headers = Metadata()
@@ -25,6 +21,14 @@ class Credentials(private val key: String) : CallCredentials() {
                 applier.fail(Status.UNAUTHENTICATED.withCause(t))
             }
         }
+    }
+
+    override fun applyRequestMetadata(
+        requestInfo: RequestInfo?,
+        appExecutor: Executor,
+        applier: MetadataApplier
+    ) {
+        apply(appExecutor, applier)
     }
 
     override fun thisUsesUnstableApi() {}

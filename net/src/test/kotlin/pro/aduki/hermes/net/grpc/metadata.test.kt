@@ -23,17 +23,9 @@ class MetadataTest {
         }
 
         val directExecutor = Executor { it.run() }
-        val info = object : CallCredentials.RequestInfo() {
-            override fun getMethodDescriptor(): io.grpc.MethodDescriptor<*, *>? = null
-            override fun getSecurityLevel(): io.grpc.SecurityLevel = io.grpc.SecurityLevel.NONE
-            override fun getAuthority(): String = "localhost"
-            override fun getCallOptions(): io.grpc.CallOptions = io.grpc.CallOptions.DEFAULT
-        }
-        credentials.applyRequestMetadata(info, directExecutor, applier)
-
+        credentials.apply(directExecutor, applier)
 
         val authKey = Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER)
         assertEquals("Key $key", capturedMetadata?.get(authKey))
     }
 }
-
