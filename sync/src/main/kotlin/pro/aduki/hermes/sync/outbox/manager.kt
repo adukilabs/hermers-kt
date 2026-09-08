@@ -168,3 +168,4 @@ class Manager(private val storage: Storage) {
         storage.putOutbox(entry)
     }
 }
+

@@ -1,28 +1,92 @@
 package pro.aduki.hermes.sdk
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import pro.aduki.hermes.state.repository.ContactSource
+import pro.aduki.hermes.state.repository.Identity
+import pro.aduki.hermes.state.repository.MailSource
+import pro.aduki.hermes.store.entities.Contact as ContactEntity
+import pro.aduki.hermes.store.entities.Mailbox
+import pro.aduki.hermes.store.entities.Message
+import pro.aduki.hermes.store.entities.Outbox
+import pro.aduki.hermes.sync.outbox.Dispatcher
+import pro.aduki.hermes.sync.outbox.Manager
+import pro.aduki.hermes.sync.outbox.Storage
+import pro.aduki.hermes.sync.outbox.Worker
+import pro.aduki.hermes.state.repository.Contact as ContactRepo
+import pro.aduki.hermes.state.repository.Mail as MailRepo
 
 class ClientTest {
+
+    private class TestStorage : Storage {
+        val messages = mutableMapOf<String, Message>()
+        val outbox = mutableMapOf<Long, Outbox>()
+        private var nextId = 1L
+
+        override fun getMessage(hex: String): Message? = messages[hex]
+        override fun putMessage(msg: Message) { messages[msg.hex] = msg }
+        override fun getOutbox(id: Long): Outbox? = outbox[id]
+        override fun putOutbox(entry: Outbox): Long {
+            val id = if (entry.id == 0L) nextId++ else entry.id
+            outbox[id] = entry.copy(id = id)
+            return id
+        }
+        override fun removeOutbox(id: Long) { outbox.remove(id) }
+        override fun pending(): List<Outbox> = outbox.values.sortedBy { it.created }
+        override fun <T> tx(block: () -> T): T = block()
+    }
+
+    private class TestMailSource : MailSource {
+        val mailboxList = MutableStateFlow<List<Mailbox>>(emptyList())
+        val messageList = MutableStateFlow<List<Message>>(emptyList())
+
+        override fun mailboxes(): Flow<List<Mailbox>> = mailboxList
+        override fun messages(mailboxHex: String): Flow<List<Message>> = messageList
+        override fun message(hex: String): Flow<Message?> =
+            MutableStateFlow(messageList.value.firstOrNull { it.hex == hex })
+        override fun getMessage(hex: String): Message? =
+            messageList.value.firstOrNull { it.hex == hex }
+        override fun getMailbox(hex: String): Mailbox? =
+            mailboxList.value.firstOrNull { it.hex == hex }
+    }
+
+    private class TestContactSource : ContactSource {
+        val contactList = MutableStateFlow<List<ContactEntity>>(emptyList())
+        override fun contacts(): Flow<List<ContactEntity>> = contactList
+        override fun get(hex: String): ContactEntity? =
+            contactList.value.firstOrNull { it.hex == hex }
+    }
 
     @Test
     fun testBuilder() {
         val client = HermesClient.builder()
             .key("hm_live_validkey123")
             .endpoint("https://hermers.aduki.pro/v1")
+            .grpc("grpc.aduki.pro", 443)
             .timeout(30)
-            .secureStore(true)
+            .secure(true)
             .build()
 
         assertNotNull(client)
         assertEquals("hm_live_validkey123", client.apiKey)
         assertEquals("https://hermers.aduki.pro/v1", client.options.endpoint)
+        assertEquals("grpc.aduki.pro", client.options.grpcHost)
+        assertEquals(443, client.options.grpcPort)
         assertEquals(30L, client.options.timeoutSeconds)
+        assertTrue(client.options.secure)
         assertNotNull(client.mail)
         assertNotNull(client.contacts)
         assertNotNull(client.sync)
+        assertNotNull(client.lifecycle)
     }
 
     @Test
@@ -33,5 +97,90 @@ class ClientTest {
                 .build()
         }
     }
-}
 
+    @Test
+    fun testLifecycleTransitions() {
+        val client = HermesClient.builder()
+            .key("hm_test_key")
+            .build()
+
+        assertTrue(client.lifecycle.active())
+
+        client.pause()
+        assertFalse(client.lifecycle.active())
+
+        client.resume()
+        assertTrue(client.lifecycle.active())
+    }
+
+    @Test
+    fun testMailFacadeSendAndOutbox() = runBlocking {
+        val storage = TestStorage()
+        val manager = Manager(storage)
+        val dispatched = mutableListOf<String>()
+        val worker = Worker(manager, Dispatcher { action ->
+            dispatched.add(action.action)
+        })
+        val mailSource = TestMailSource()
+        val mailRepo = MailRepo(source = mailSource, manager = manager, scope = CoroutineScope(Dispatchers.Unconfined))
+
+        val client = HermesClient.builder()
+            .key("hm_test_key")
+            .manager(manager)
+            .worker(worker)
+            .mail(mailRepo)
+            .build()
+
+        val msg = client.mail.send(
+            to = listOf("recipient@example.com"),
+            subject = "Fast Hermes",
+            body = "Hello from Android SDK"
+        )
+
+        assertNotNull(msg)
+        assertEquals("recipient@example.com", msg.to)
+        assertEquals(1, dispatched.size)
+        assertEquals("send", dispatched[0])
+    }
+
+    @Test
+    fun testContactsFacadeSearch() = runBlocking {
+        val contactSource = TestContactSource()
+        contactSource.contactList.value = listOf(
+            ContactEntity(hex = "c1", name = "Alice Adams", email = "alice@aduki.pro"),
+            ContactEntity(hex = "c2", name = "Bob Builder", email = "bob@aduki.pro")
+        )
+        val contactRepo = ContactRepo(source = contactSource, scope = CoroutineScope(Dispatchers.Unconfined))
+
+        val client = HermesClient.builder()
+            .key("hm_test_key")
+            .contacts(contactRepo)
+            .build()
+
+        val search = client.contacts.search("Alice")
+        assertNotNull(search)
+        val results = search!!.value
+        assertEquals(1, results.size)
+        assertEquals("Alice Adams", results[0].name)
+    }
+
+    @Test
+    fun testCachedIdentityResolution() = runBlocking {
+        val client = HermesClient.builder()
+            .key("hm_test_key")
+            .build()
+
+        val identity = Identity(
+            user = "usr_007",
+            tenant = "ten_007",
+            owner = true,
+            tier = "enterprise"
+        )
+        client.session.update(identity)
+
+        val resolved = client.me()
+        assertNotNull(resolved)
+        assertEquals("usr_007", resolved!!.user)
+        assertEquals("ten_007", resolved.tenant)
+    }
+}

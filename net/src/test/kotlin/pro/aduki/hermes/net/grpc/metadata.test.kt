@@ -29,3 +29,4 @@ class MetadataTest {
         assertEquals("Key $key", capturedMetadata?.get(authKey))
     }
 }
+

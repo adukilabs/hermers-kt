@@ -63,3 +63,4 @@ class Whoami(
         return pattern.find(json)?.groupValues?.get(1)
     }
 }
+

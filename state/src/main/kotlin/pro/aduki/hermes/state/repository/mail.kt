@@ -128,3 +128,4 @@ class Mail(
 }
 
 typealias MailRepository = Mail
+

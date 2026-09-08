@@ -90,3 +90,4 @@ class WorkerTest {
         assertTrue(manager.pending().isEmpty())
     }
 }
+

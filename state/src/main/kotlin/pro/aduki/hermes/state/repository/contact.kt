@@ -79,3 +79,4 @@ class Contact(
 }
 
 typealias ContactRepository = Contact
+

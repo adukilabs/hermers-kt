@@ -79,3 +79,4 @@ class ContactTest {
         assertEquals("ctag_v2", storage.getSync("contacts")!!.cursor)
     }
 }
+
