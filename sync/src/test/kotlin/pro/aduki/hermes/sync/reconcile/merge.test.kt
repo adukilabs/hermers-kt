@@ -10,12 +10,12 @@ class MergeTest {
     fun testServerOverride() {
         val local = Message(
             hex = "msg_1",
-            flags = Message.FLAG_SEEN,
+            flags = Message.SEEN,
             dirty = false
         )
-        val serverFlags = Message.FLAG_SEEN or Message.FLAG_FLAGGED
+        val serverFlags = Message.SEEN or Message.FLAGGED
 
-        val merged = Reconcile.mergeFlags(local, serverFlags)
+        val merged = Reconcile.flags(local, serverFlags)
         assertEquals(serverFlags, merged)
     }
 
@@ -23,13 +23,45 @@ class MergeTest {
     fun testLocalPreserve() {
         val local = Message(
             hex = "msg_2",
-            flags = Message.FLAG_FLAGGED,
+            flags = Message.FLAGGED,
             dirty = true
         )
         val serverFlags = 0
 
-        val merged = Reconcile.mergeFlags(local, serverFlags)
-        assertEquals(Message.FLAG_FLAGGED, merged)
+        val merged = Reconcile.flags(local, serverFlags)
+        assertEquals(Message.FLAGGED, merged)
+    }
+
+    @Test
+    fun testMailboxPreserveWhenDirty() {
+        val local = Message(hex = "msg_3", mailbox = "trash_box", dirty = true)
+        val server = "inbox"
+        val merged = Reconcile.mailbox(local, server)
+        assertEquals("trash_box", merged)
+    }
+
+    @Test
+    fun testMailboxUpdateWhenClean() {
+        val local = Message(hex = "msg_4", mailbox = "inbox", dirty = false)
+        val server = "archive"
+        val merged = Reconcile.mailbox(local, server)
+        assertEquals("archive", merged)
+    }
+
+    @Test
+    fun testContactPreserveNewer() {
+        val local = pro.aduki.hermes.store.entities.Contact(hex = "c1", name = "Local Alice", updated = 2000L)
+        val server = pro.aduki.hermes.store.entities.Contact(hex = "c1", name = "Server Alice", updated = 1000L)
+        val merged = Reconcile.contact(local, server)
+        assertEquals("Local Alice", merged.name)
+    }
+
+    @Test
+    fun testContactApplyNewerServer() {
+        val local = pro.aduki.hermes.store.entities.Contact(hex = "c2", name = "Old Bob", updated = 1000L)
+        val server = pro.aduki.hermes.store.entities.Contact(hex = "c2", name = "New Bob", updated = 3000L)
+        val merged = Reconcile.contact(local, server)
+        assertEquals("New Bob", merged.name)
     }
 }
 

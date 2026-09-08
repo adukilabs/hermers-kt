@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Cached session and identity state repository.
+ * Identity models authenticated user and tenant state.
  */
 data class Identity(
     val user: String = "",
@@ -15,16 +15,22 @@ data class Identity(
     val tier: String = ""
 )
 
-class SessionRepository {
+/**
+ * Session manages the active identity StateFlow.
+ */
+class Session {
     private val _identity = MutableStateFlow<Identity?>(null)
     val identity: StateFlow<Identity?> = _identity.asStateFlow()
 
-    fun updateIdentity(newIdentity: Identity) {
-        _identity.value = newIdentity
+    fun update(identity: Identity) {
+        _identity.value = identity
     }
+
+    fun updateIdentity(newIdentity: Identity) = update(newIdentity)
 
     fun clear() {
         _identity.value = null
     }
 }
 
+typealias SessionRepository = Session

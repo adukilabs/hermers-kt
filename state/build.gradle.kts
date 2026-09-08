@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":sync"))
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.coroutines.core)
+    implementation(libs.objectbox.kotlin)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.coroutines.test)
