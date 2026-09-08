@@ -25,7 +25,7 @@ okhttp-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.
 grpc-okhttp = { module = "io.grpc:grpc-okhttp", version.ref = "grpc" }
 grpc-protobuf = { module = "io.grpc:grpc-protobuf-lite", version.ref = "grpc" }
 grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
-grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref.grpcKotlin }
+grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpcKotlin" }
 
 junit = { module = "junit:junit", version.ref = "junit" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
