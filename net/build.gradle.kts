@@ -11,6 +11,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.grpc.okhttp)
     implementation(libs.grpc.stub)
+    implementation(libs.json)
+
 
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)

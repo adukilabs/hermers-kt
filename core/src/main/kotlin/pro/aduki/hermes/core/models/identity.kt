@@ -10,3 +10,4 @@ data class Identity(
     val scopes: List<String> = emptyList(),
     val tier: String = ""
 )
+

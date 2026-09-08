@@ -9,8 +9,11 @@ coroutines = "1.8.1"
 androidxCore = "1.13.1"
 robolectric = "4.12.2"
 junit = "4.13.2"
+json = "20231013"
 
 [libraries]
+json = { module = "org.json:json", version.ref = "json" }
+
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
