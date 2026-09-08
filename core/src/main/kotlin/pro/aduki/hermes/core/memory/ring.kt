@@ -69,3 +69,4 @@ class Ring<T : Any>(capacity: Int = 1024) {
         return v + 1
     }
 }
+
