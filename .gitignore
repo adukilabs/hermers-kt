@@ -1,0 +1,16 @@
+# Gradle
+.gradle/
+build/
+
+# ObjectBox
+.objectbox/
+objectbox-models/default.json.bak
+
+# IDE & Editor
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
