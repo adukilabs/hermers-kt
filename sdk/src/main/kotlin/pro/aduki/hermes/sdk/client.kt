@@ -8,9 +8,11 @@ import okhttp3.OkHttpClient
 import pro.aduki.hermes.core.config.Endpoints
 import pro.aduki.hermes.core.config.Options
 import pro.aduki.hermes.net.http.Client as HttpClient
+import pro.aduki.hermes.net.http.Login
 import pro.aduki.hermes.net.http.Whoami
 import pro.aduki.hermes.state.repository.Identity
 import pro.aduki.hermes.state.repository.Session
+import pro.aduki.hermes.state.repository.Tokens
 import pro.aduki.hermes.sync.engine.Contact as ContactEngine
 import pro.aduki.hermes.sync.engine.Mailbox as MailboxEngine
 import pro.aduki.hermes.sync.outbox.Manager
@@ -22,7 +24,8 @@ import pro.aduki.hermes.state.repository.Mail as MailRepo
  * HermesClient is the primary entrypoint for the Android Kotlin SDK.
  */
 class HermesClient internal constructor(
-    val apiKey: String,
+    val apiKey: String = "",
+    val token: String = "",
     val options: Options,
     val session: Session = Session(),
     val lifecycle: Lifecycle = Lifecycle(),
@@ -38,6 +41,14 @@ class HermesClient internal constructor(
     val mail = Mail(this, manager, mailRepo, worker)
     val contacts = Contacts(this, contactRepo, contactEngine)
     val sync = Sync(this, mailboxEngine, contactEngine, worker, manager)
+
+    private fun activeAuthString(): String {
+        return session.token() ?: if (token.isNotBlank()) token else apiKey
+    }
+
+    private fun activeHttpClient(): OkHttpClient {
+        return httpClient ?: HttpClient.create(activeAuthString(), options.timeoutSeconds)
+    }
 
     init {
         lifecycle.listen { active ->
@@ -56,14 +67,45 @@ class HermesClient internal constructor(
         val cached = session.identity.value
         if (cached != null) return cached
 
-        val client = httpClient ?: HttpClient.create(apiKey, options.timeoutSeconds)
         return try {
-            val resolved = Whoami.resolve(client, options.endpoint)
+            val resolved = Whoami.resolve(activeHttpClient(), options.endpoint)
             session.update(resolved)
             resolved
         } catch (_: Exception) {
             null
         }
+    }
+
+    /**
+     * Confirms or configures 6-digit TOTP secret for the active account.
+     */
+    suspend fun totp(code: String): Boolean {
+        val currentToken = activeAuthString()
+        return Login.totp(activeHttpClient(), options.endpoint, currentToken, code)
+    }
+
+    /**
+     * Rotates session tokens using the active refresh token.
+     */
+    suspend fun refresh(): Boolean {
+        val currentRefresh = session.refresh() ?: return false
+        return try {
+            val newTokens = Login.refresh(activeHttpClient(), options.endpoint, currentRefresh)
+            session.update(newTokens)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Revokes active session on server and wipes local tokens.
+     */
+    suspend fun logout(): Boolean {
+        val currentToken = activeAuthString()
+        val ok = Login.logout(activeHttpClient(), options.endpoint, currentToken)
+        session.clear()
+        return ok
     }
 
     /**
@@ -82,6 +124,7 @@ class HermesClient internal constructor(
 
     class Builder {
         private var apiKey: String = ""
+        private var token: String = ""
         private var endpoint: String = Endpoints.REST
         private var grpcHost: String = Endpoints.GRPC_HOST
         private var grpcPort: Int = Endpoints.GRPC_PORT
@@ -96,6 +139,7 @@ class HermesClient internal constructor(
         private var contactEngine: ContactEngine? = null
 
         fun key(key: String) = apply { this.apiKey = key }
+        fun token(token: String) = apply { this.token = token }
         fun endpoint(endpoint: String) = apply { this.endpoint = endpoint }
         fun grpc(host: String, port: Int = Endpoints.GRPC_PORT) = apply {
             this.grpcHost = host
@@ -114,7 +158,9 @@ class HermesClient internal constructor(
         }
 
         fun build(): HermesClient {
-            require(apiKey.isNotBlank()) { "API key must not be blank" }
+            require(apiKey.isNotBlank() || token.isNotBlank()) {
+                "Either API key or JWT token must not be blank"
+            }
             val options = Options(
                 endpoint = endpoint,
                 grpcHost = grpcHost,
@@ -124,6 +170,7 @@ class HermesClient internal constructor(
             )
             return HermesClient(
                 apiKey = apiKey,
+                token = token,
                 options = options,
                 httpClient = httpClient,
                 manager = manager,
@@ -138,5 +185,26 @@ class HermesClient internal constructor(
 
     companion object {
         fun builder() = Builder()
+
+        /**
+         * Interactively logs in with email, password, and optional 6-digit TOTP.
+         */
+        suspend fun login(
+            email: String,
+            password: String,
+            totp: String? = null,
+            endpoint: String = Endpoints.REST
+        ): HermesClient {
+            val tempClient = OkHttpClient()
+            val tokens = Login.submit(tempClient, endpoint, email, password, totp)
+            val client = builder()
+                .endpoint(endpoint)
+                .token(tokens.token)
+                .build()
+
+            client.session.update(tokens)
+            client.me() // Eagerly resolve identity
+            return client
+        }
     }
 }

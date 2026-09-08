@@ -4,16 +4,28 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Auth interceptor attaching API key and client metadata to all HTTP requests.
+ * Auth interceptor attaching API key or Bearer JWT token to all HTTP requests.
  */
-class Auth(private val key: String) : Interceptor {
+class Auth(private val supplier: () -> String) : Interceptor {
+
+    constructor(key: String) : this({ key })
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        val request = chain.request().newBuilder()
-            .header("Authorization", "Key $key")
+        val token = supplier().trim()
+        val authHeader = when {
+            token.isEmpty() -> ""
+            token.startsWith("hm_") || token.startsWith("key_") -> "Key $token"
+            else -> "Bearer $token"
+        }
+
+        val builder = chain.request().newBuilder()
             .header("Accept", "application/json")
             .header("User-Agent", "Hermes-Android/1.0.0")
-            .build()
-        return chain.proceed(request)
+
+        if (authHeader.isNotEmpty()) {
+            builder.header("Authorization", authHeader)
+        }
+
+        return chain.proceed(builder.build())
     }
 }

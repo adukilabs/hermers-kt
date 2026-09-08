@@ -8,12 +8,14 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import pro.aduki.hermes.state.repository.ContactSource
 import pro.aduki.hermes.state.repository.Identity
 import pro.aduki.hermes.state.repository.MailSource
+import pro.aduki.hermes.state.repository.Tokens
 import pro.aduki.hermes.store.entities.Contact as ContactEntity
 import pro.aduki.hermes.store.entities.Mailbox
 import pro.aduki.hermes.store.entities.Message
@@ -87,6 +89,17 @@ class ClientTest {
         assertNotNull(client.contacts)
         assertNotNull(client.sync)
         assertNotNull(client.lifecycle)
+    }
+
+    @Test
+    fun testInteractiveTokenBuilder() {
+        val client = HermesClient.builder()
+            .token("jwt_sample_token_123")
+            .endpoint("https://hermers.aduki.pro/v1")
+            .build()
+
+        assertNotNull(client)
+        assertEquals("jwt_sample_token_123", client.token)
     }
 
     @Test
@@ -182,5 +195,27 @@ class ClientTest {
         assertNotNull(resolved)
         assertEquals("usr_007", resolved!!.user)
         assertEquals("ten_007", resolved.tenant)
+    }
+
+    @Test
+    fun testSessionTokensAndLogout() = runBlocking {
+        val client = HermesClient.builder()
+            .key("hm_test_key")
+            .build()
+
+        val tokens = Tokens(
+            token = "jwt_user_access",
+            refresh = "rt_user_refresh",
+            expires = "2026-09-08T22:00:00Z"
+        )
+        client.session.update(tokens)
+
+        assertEquals("jwt_user_access", client.session.token())
+        assertEquals("rt_user_refresh", client.session.refresh())
+
+        // Logout resets session state
+        client.session.clear()
+        assertNull(client.session.token())
+        assertNull(client.session.identity.value)
     }
 }
