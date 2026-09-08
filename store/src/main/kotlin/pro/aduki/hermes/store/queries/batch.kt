@@ -3,16 +3,15 @@ package pro.aduki.hermes.store.queries
 import io.objectbox.BoxStore
 
 /**
- * BatchWriter provides atomic ACID transaction execution over ObjectBox.
+ * Batch provides atomic ACID transaction execution over ObjectBox.
  */
-class BatchWriter(private val store: BoxStore) {
+class Batch(private val store: BoxStore) {
 
-    fun <T> inTx(block: () -> T): T {
+    fun <T> tx(block: () -> T): T {
         return store.callInTx(block)
     }
 
-    fun runInTx(block: Runnable) {
+    fun run(block: Runnable) {
         store.runInTx(block)
     }
 }
-

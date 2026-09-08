@@ -5,7 +5,7 @@ import io.objectbox.annotation.Id
 import io.objectbox.annotation.Index
 
 /**
- * Message represents a single email message stored in ObjectBox FlatBuffers binary format.
+ * Message represents an email message stored in ObjectBox FlatBuffers binary format.
  */
 @Entity
 data class Message(
@@ -15,7 +15,7 @@ data class Message(
     @Index var uid: Long = 0,
     var subject: String = "",
     var from: String = "",
-    var to: String = "", // Comma-delimited recipient list for FlatBuffers efficiency
+    var to: String = "", // Comma-delimited recipients for FlatBuffers efficiency
     var snippet: String = "",
     var blob: String = "",
     var size: Long = 0,
@@ -25,19 +25,24 @@ data class Message(
     var dirty: Boolean = false
 ) {
     companion object {
-        const val FLAG_SEEN = 1
-        const val FLAG_ANSWERED = 2
-        const val FLAG_FLAGGED = 4
-        const val FLAG_DELETED = 8
-        const val FLAG_DRAFT = 16
+        const val SEEN = 1
+        const val ANSWERED = 2
+        const val FLAGGED = 4
+        const val DELETED = 8
+        const val DRAFT = 16
     }
 
-    fun isSeen(): Boolean = (flags and FLAG_SEEN) != 0
-    fun isFlagged(): Boolean = (flags and FLAG_FLAGGED) != 0
+    fun seen(): Boolean = (flags and SEEN) != 0
 
-    fun toggleFlag(flagMask: Int) {
-        flags = flags xor flagMask
+    fun flagged(): Boolean = (flags and FLAGGED) != 0
+
+    fun toggle(flag: Int) {
+        flags = flags xor flag
         dirty = true
     }
-}
 
+    fun recipients(): List<String> {
+        if (to.isBlank()) return emptyList()
+        return to.split(",").map { it.trim() }
+    }
+}

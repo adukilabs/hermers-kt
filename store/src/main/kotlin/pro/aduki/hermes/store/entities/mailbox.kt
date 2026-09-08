@@ -5,7 +5,7 @@ import io.objectbox.annotation.Id
 import io.objectbox.annotation.Index
 
 /**
- * Mailbox represents an email folder with CONDSTORE tracking.
+ * Mailbox represents an email folder with CONDSTORE sequence tracking.
  */
 @Entity
 data class Mailbox(
@@ -19,4 +19,3 @@ data class Mailbox(
     var exists: Int = 0,
     var unseen: Int = 0
 )
-

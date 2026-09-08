@@ -23,3 +23,4 @@ inline fun <R> withGuard(bytes: ByteArray, block: (Guard) -> R): R {
         guard.close()
     }
 }
+

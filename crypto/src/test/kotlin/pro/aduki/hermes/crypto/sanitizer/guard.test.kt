@@ -38,3 +38,4 @@ class GuardTest {
         assertTrue(secret.all { it == 0.toByte() })
     }
 }
+

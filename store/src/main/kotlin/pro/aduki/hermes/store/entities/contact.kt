@@ -5,7 +5,7 @@ import io.objectbox.annotation.Id
 import io.objectbox.annotation.Index
 
 /**
- * Contact represents an address book contact.
+ * Contact represents an address book contact with search indexes.
  */
 @Entity
 data class Contact(
@@ -19,4 +19,3 @@ data class Contact(
     var ctag: String = "",
     var updated: Long = 0
 )
-

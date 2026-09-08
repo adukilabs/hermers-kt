@@ -22,3 +22,4 @@ class ProviderTest {
         assertEquals(32, key.encoded.size) // 256 bits = 32 bytes
     }
 }
+

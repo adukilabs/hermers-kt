@@ -5,7 +5,7 @@ import io.objectbox.annotation.Id
 import io.objectbox.annotation.Index
 
 /**
- * Outbox stores atomic pending mutations to be dispatched to the Hermes server.
+ * Outbox stores atomic pending mutations to be dispatched to Hermes.
  */
 @Entity
 data class Outbox(
@@ -30,4 +30,3 @@ data class Outbox(
         return result
     }
 }
-

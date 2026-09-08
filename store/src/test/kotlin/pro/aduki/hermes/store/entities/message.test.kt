@@ -17,33 +17,33 @@ class MessageTest {
             flags = 0
         )
 
-        assertFalse(msg.isSeen())
-        assertFalse(msg.isFlagged())
+        assertFalse(msg.seen())
+        assertFalse(msg.flagged())
 
         // Mark seen
-        msg.toggleFlag(Message.FLAG_SEEN)
-        assertTrue(msg.isSeen())
+        msg.toggle(Message.SEEN)
+        assertTrue(msg.seen())
         assertTrue(msg.dirty)
 
         // Mark flagged
-        msg.toggleFlag(Message.FLAG_FLAGGED)
-        assertTrue(msg.isFlagged())
-        assertTrue(msg.isSeen())
+        msg.toggle(Message.FLAGGED)
+        assertTrue(msg.flagged())
+        assertTrue(msg.seen())
 
         // Toggle seen off
-        msg.toggleFlag(Message.FLAG_SEEN)
-        assertFalse(msg.isSeen())
-        assertTrue(msg.isFlagged())
+        msg.toggle(Message.SEEN)
+        assertFalse(msg.seen())
+        assertTrue(msg.flagged())
     }
 
     @Test
     fun testRecipients() {
         val msg = Message(
-            to = "alice@example.com,bob@example.com"
+            to = "alice@example.com, bob@example.com"
         )
-        val recipients = msg.to.split(",")
+        val recipients = msg.recipients()
         assertEquals(2, recipients.size)
         assertEquals("alice@example.com", recipients[0])
+        assertEquals("bob@example.com", recipients[1])
     }
 }
-

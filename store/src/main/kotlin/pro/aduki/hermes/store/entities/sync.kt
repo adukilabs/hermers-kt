@@ -5,7 +5,7 @@ import io.objectbox.annotation.Id
 import io.objectbox.annotation.Index
 
 /**
- * Sync stores cursor state for incremental synchronizers.
+ * Sync stores cursor state for delta synchronizers.
  */
 @Entity
 data class Sync(
@@ -14,4 +14,3 @@ data class Sync(
     var cursor: String = "",
     var timestamp: Long = 0
 )
-
