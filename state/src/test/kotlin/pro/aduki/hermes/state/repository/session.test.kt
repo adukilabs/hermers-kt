@@ -1,15 +1,13 @@
-package pro.aduki.hermes.state
+package pro.aduki.hermes.state.repository
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import pro.aduki.hermes.state.repository.Identity
-import pro.aduki.hermes.state.repository.SessionRepository
 
-class SessionRepositoryTest {
+class SessionTest {
 
     @Test
-    fun testIdentityUpdatesStateFlow() {
+    fun testUpdate() {
         val repo = SessionRepository()
         assertNull(repo.identity.value)
 
@@ -27,4 +25,3 @@ class SessionRepositoryTest {
         assertNull(repo.identity.value)
     }
 }
-

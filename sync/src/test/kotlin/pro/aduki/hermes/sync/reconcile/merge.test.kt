@@ -1,14 +1,13 @@
-package pro.aduki.hermes.sync
+package pro.aduki.hermes.sync.reconcile
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import pro.aduki.hermes.store.entities.Message
-import pro.aduki.hermes.sync.reconcile.Reconcile
 
-class CondstoreSyncTest {
+class MergeTest {
 
     @Test
-    fun testServerFlagsOverrideCleanLocalMessage() {
+    fun testServerOverride() {
         val local = Message(
             hex = "msg_1",
             flags = Message.FLAG_SEEN,
@@ -21,16 +20,15 @@ class CondstoreSyncTest {
     }
 
     @Test
-    fun testDirtyLocalMessagePreservesLocalFlags() {
+    fun testLocalPreserve() {
         val local = Message(
             hex = "msg_2",
             flags = Message.FLAG_FLAGGED,
             dirty = true
         )
-        val serverFlags = 0 // Server thinks it is not flagged
+        val serverFlags = 0
 
         val merged = Reconcile.mergeFlags(local, serverFlags)
         assertEquals(Message.FLAG_FLAGGED, merged)
     }
 }
-

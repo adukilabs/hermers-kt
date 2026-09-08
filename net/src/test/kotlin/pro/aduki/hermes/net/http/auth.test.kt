@@ -1,4 +1,4 @@
-package pro.aduki.hermes.net
+package pro.aduki.hermes.net.http
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -8,9 +8,8 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import pro.aduki.hermes.net.http.AuthInterceptor
 
-class AuthInterceptorTest {
+class AuthTest {
 
     private lateinit var server: MockWebServer
 
@@ -26,7 +25,7 @@ class AuthInterceptorTest {
     }
 
     @Test
-    fun testAuthHeaderInjected() {
+    fun testHeader() {
         server.enqueue(MockResponse().setResponseCode(200).setBody("""{"status":"ok"}"""))
 
         val apiKey = "hm_live_abc123xyz789"
@@ -48,4 +47,3 @@ class AuthInterceptorTest {
         assertEquals("Hermes-Android/1.0.0", recorded.getHeader("User-Agent"))
     }
 }
-

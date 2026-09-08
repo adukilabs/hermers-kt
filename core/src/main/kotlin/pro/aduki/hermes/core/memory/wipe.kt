@@ -3,14 +3,15 @@ package pro.aduki.hermes.core.memory
 import java.util.Arrays
 
 /**
- * Deterministic memory zeroization for sensitive byte and character arrays.
+ * Deterministic memory zeroization for sensitive primitive arrays.
+ * Neutralizes memory inspection and heap dump attacks on Android devices.
  */
 inline fun <R> withWipedBytes(size: Int, block: (ByteArray) -> R): R {
     val buffer = ByteArray(size)
     try {
         return block(buffer)
     } finally {
-        Arrays.fill(buffer, 0.toByte())
+        buffer.wipe()
     }
 }
 
@@ -18,7 +19,7 @@ inline fun <R> withWipedChars(chars: CharArray, block: (CharArray) -> R): R {
     try {
         return block(chars)
     } finally {
-        Arrays.fill(chars, '\u0000')
+        chars.wipe()
     }
 }
 
@@ -30,3 +31,10 @@ fun CharArray.wipe() {
     Arrays.fill(this, '\u0000')
 }
 
+fun IntArray.wipe() {
+    Arrays.fill(this, 0)
+}
+
+fun LongArray.wipe() {
+    Arrays.fill(this, 0L)
+}

@@ -1,15 +1,14 @@
-package pro.aduki.hermes.store
+package pro.aduki.hermes.store.entities
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import pro.aduki.hermes.store.entities.Message
 
-class MessageEntityTest {
+class MessageTest {
 
     @Test
-    fun testFlagBitmaskOperations() {
+    fun testFlags() {
         val msg = Message(
             hex = "msg_001",
             mailbox = "inbox",
@@ -26,7 +25,7 @@ class MessageEntityTest {
         assertTrue(msg.isSeen())
         assertTrue(msg.dirty)
 
-        // Mark starred / flagged
+        // Mark flagged
         msg.toggleFlag(Message.FLAG_FLAGGED)
         assertTrue(msg.isFlagged())
         assertTrue(msg.isSeen())
@@ -38,7 +37,7 @@ class MessageEntityTest {
     }
 
     @Test
-    fun testRecipientDelimiterPacking() {
+    fun testRecipients() {
         val msg = Message(
             to = "alice@example.com,bob@example.com"
         )
@@ -47,4 +46,3 @@ class MessageEntityTest {
         assertEquals("alice@example.com", recipients[0])
     }
 }
-

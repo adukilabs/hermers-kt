@@ -5,10 +5,10 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
-class HermesClientBuilderTest {
+class ClientTest {
 
     @Test
-    fun testBuilderBuildsClientWithValidKey() {
+    fun testBuilder() {
         val client = HermesClient.builder()
             .key("hm_live_validkey123")
             .endpoint("https://hermers.aduki.pro/v1")
@@ -26,7 +26,7 @@ class HermesClientBuilderTest {
     }
 
     @Test
-    fun testBuilderThrowsOnEmptyKey() {
+    fun testEmptyKey() {
         assertThrows(IllegalArgumentException::class.java) {
             HermesClient.builder()
                 .key("")
@@ -34,4 +34,3 @@ class HermesClientBuilderTest {
         }
     }
 }
-
