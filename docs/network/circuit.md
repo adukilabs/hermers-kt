@@ -1,40 +1,79 @@
-# Circuit Breaker & Fault Tolerance
+# Circuit Breaker & Fault Tolerance Reference
 
-To protect battery life and avoid hammering unreachable backend endpoints when the device encounters poor network coverage, the SDK integrates an atomic 3-state `Circuit` breaker.
-
----
-
-## 1. State Machine
-
-```text
-       ┌─────────── 5 Consecutive Failures ───────────┐
-       ▼                                              │
-  ┌─────────┐                                   ┌──────────┐
-  │ CLOSED  │                                   │   OPEN   │
-  └─────────┘                                   └──────────┘
-       ▲                                              │
-       │                                              ▼
-       └────────── 1 Success ──────────── 15s Reset Timeout (HALF-OPEN)
-```
-
-1. **CLOSED**: Normal operation. All requests pass through.
-2. **OPEN**: Trips after 5 consecutive failures. Subsequent requests fail-fast immediately without radio wakeups.
-3. **HALF-OPEN**: After a 15-second probe delay, allows a single canary request. Success resets to `CLOSED`; failure returns to `OPEN`.
+To conserve device battery and eliminate unnecessary radio wakeups during network outages, the Hermes Android SDK wraps network operations in a non-blocking 3-state `Circuit` breaker.
 
 ---
 
-## 2. Usage
-
-In `core/retry/circuit.kt`:
+## 1. Class & Method Signatures
 
 ```kotlin
-val circuit = Circuit(threshold = 5, timeout = 15_000)
+package pro.aduki.hermes.core.retry
+
+import pro.aduki.hermes.core.errors.HermesException
+
+class Circuit(
+    private val threshold: Int = 5,
+    private val timeout: Long = 15_000
+) {
+    enum class State {
+        CLOSED,
+        OPEN,
+        HALF_OPEN
+    }
+
+    fun state(): State
+    fun success()
+    fun fail()
+    inline fun <T> execute(block: () -> T): T
+}
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `threshold` | `Int` | `5` | Number of consecutive exceptions before the circuit trips from `CLOSED` to `OPEN`. |
+| `timeout` | `Long` | `15_000` | Cooldown duration in milliseconds before an `OPEN` circuit transitions to `HALF_OPEN` for a canary probe. |
+
+---
+
+## 2. State Machine Specification
+
+```mermaid
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN: 5 consecutive failures (threshold reached)
+    OPEN --> HALF_OPEN: 15 seconds elapsed (timeout)
+    HALF_OPEN --> CLOSED: Canary request succeeds (success())
+    HALF_OPEN --> OPEN: Canary request fails (fail())
+```
+
+### State Behaviors
+
+| State | Request Execution Behavior |
+| :--- | :--- |
+| **`CLOSED`** | Normal execution. All requests execute directly. Failures increment an atomic counter; any success resets the failure count to 0. |
+| **`OPEN`** | Fail-fast mode. Calls to `execute { ... }` immediately throw `HermesException.CircuitOpen` without executing the block or waking the radio modem. |
+| **`HALF_OPEN`** | Canary probing mode. Allows a single execution. If it succeeds, circuit resets to `CLOSED`. If it fails, circuit immediately returns to `OPEN`. |
+
+---
+
+## 3. Usage & Exception Handling Example
+
+```kotlin
+val circuit = Circuit(threshold = 5, timeout = 15_000L)
 
 try {
     val response = circuit.execute {
-        transport.send(payload)
+        transport.dispatch(payload)
     }
-} catch (e: HermesException.Unavailable) {
-    // Fast-fail: Circuit is currently OPEN
+} catch (e: HermesException.CircuitOpen) {
+    // Immediate fail-fast: device is offline or remote service is unresponsive
+    // Outbox actions remain safely stored in local ObjectBox database
+    showOfflineStatusBanner()
+} catch (e: Exception) {
+    // Network or transport error — circuit counted this as a failure
+    Log.w("Hermes", "Call failed: ${e.message}")
 }
 ```
+

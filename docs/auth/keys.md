@@ -1,33 +1,104 @@
-# API Keys
+# Static API Keys Reference
 
-API keys are intended for automated background processes, IoT devices, or headless services that interact with Hermes without human credential entry.
+API keys provide immutable machine-to-machine authentication for background workers, automated tests, headless kiosks, and daemons without requiring interactive user credentials.
 
 ---
 
-## 1. Key Format & Scopes
+## 1. Key Format & Specification
 
-Hermes API keys are cryptographic identifiers prefixed with `hm_live_` (production) or `hm_test_` (sandbox).
+Hermes API keys are 64-character or 40-character cryptographic tokens formatted with an environment prefix:
+
+| Prefix | Environment | Intended Use |
+| :--- | :--- | :--- |
+| `hm_live_<hex>` | Production | Live production tenants and real message dispatch |
+| `hm_test_<hex>` | Sandbox / Staging | Integration testing, CI/CD pipelines, mock server testing |
+
+### Examples
 
 ```text
-hm_live_7f9b8c2d1e0a4b5c6d7e8f9a0b1c2d3e
+hm_live_7f9b8c2d1e0a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a
+hm_test_0123456789abcdef0123456789abcdef0123456789abcdef
 ```
-
-API keys inherit explicitly granted permission scopes (e.g. `mail:read`, `mail:send`, `contacts:read`), or full access if issued by a tenant owner.
 
 ---
 
-## 2. Initializing with an API Key
+## 2. Builder Initialization
 
-Pass the key directly to `HermesClient.builder()`:
+API keys are configured via `HermesClient.Builder.key(String)`:
 
 ```kotlin
+package pro.aduki.hermes.sdk
+
 val client = HermesClient.builder()
-    .key("hm_live_7f9b8c2d1e0a4b5c6d7e8f9a0b1c2d3e")
+    .key("hm_live_7f9b8c2d1e0a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a")
     .endpoint("https://hermers.aduki.pro/v1")
+    .timeout(30)
+    .secure(true)
     .build()
 ```
 
-The SDK automatically injects:
+### Builder Method Signatures
 
-- REST: `Authorization: Key hm_live_...`
-- gRPC: Metadata key `authorization: Key hm_live_...`
+```kotlin
+fun HermesClient.Builder.key(key: String): HermesClient.Builder
+```
+
+- **`key: String`**: API key string. Must not be blank if no JWT token is provided.
+- **Validation**: When `build()` is invoked, the builder enforces:
+  ```kotlin
+  require(apiKey.isNotBlank() || token.isNotBlank()) {
+      "Either API key or JWT token must not be blank"
+  }
+  ```
+
+---
+
+## 3. Network Protocol Details
+
+### REST HTTP Header
+
+On all outbound HTTP requests, the SDK interceptor inspects the credential and attaches the `Key` scheme header:
+
+```http
+GET /v1/auth/whoami HTTP/1.1
+Host: hermers.aduki.pro
+Authorization: Key hm_live_7f9b8c2d1e0a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a
+Accept: application/json
+```
+
+### gRPC Transport Metadata
+
+For gRPC channels, the SDK attaches the key as ASCII metadata in the `authorization` header:
+
+```kotlin
+val metadata = Metadata().apply {
+    val key = Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER)
+    put(key, "Key $apiKey")
+}
+```
+
+---
+
+## 4. Scope Resolution
+
+When initialized with an API key, calling `client.me()` contacts `GET /v1/auth/whoami` to verify the key and retrieve its assigned tenant and permissions:
+
+```kotlin
+val identity: Identity? = client.me()
+if (identity != null) {
+    println("Tenant: ${identity.tenant}")
+    println("Tier: ${identity.tier}")
+    println("Scopes: ${identity.scopes.joinToString()}")
+}
+```
+
+### Permission Scopes
+
+| Scope | Capability |
+| :--- | :--- |
+| `mail:read` | Inspect mailboxes, query CONDSTORE delta changes, fetch message metadata |
+| `mail:send` | Enqueue outbound messages and dispatch raw RFC 822 blobs |
+| `mail:modify` | Flag, move, or delete messages |
+| `contacts:read` | Query address book contacts and incremental ctag changes |
+| `contacts:write` | Create, update, or delete contacts |
+

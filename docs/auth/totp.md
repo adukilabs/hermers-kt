@@ -1,40 +1,161 @@
-# Two-Factor Authentication (TOTP)
+# Two-Factor Authentication (TOTP) Reference
 
-Hermes supports RFC 6238 Time-based One-Time Passwords (TOTP) for two-factor authentication (2FA).
+Hermes implements RFC 6238 Time-based One-Time Passwords (TOTP) (SHA-1 / SHA-256 with 30-second time drift windows).
 
 ---
 
-## 1. Logging In with TOTP
-
-When a user has TOTP enabled on their account, `POST /v1/auth/login` requires the current 6-digit code:
+## 1. Method Specification
 
 ```kotlin
-val client = HermesClient.login(
-    email = "alice@aduki.pro",
-    password = "CorrectHorseBatteryStaple123!",
-    totp = "123456" // Exactly 6 numeric digits
-)
+package pro.aduki.hermes.sdk
+
+suspend fun HermesClient.totp(code: String): Boolean
 ```
 
-If the account requires TOTP and none is provided, or if the provided code is incorrect/expired, the call throws `HermesException.Unauthorized`.
+### Parameters
+
+| Parameter | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `code` | `String` | Yes | Exactly 6 numeric ASCII digits (`0-9`). |
+
+### Return Value
+
+- **Type**: `Boolean`
+- **Description**: Returns `true` if the TOTP secret was verified and confirmed by the server; `false` if HTTP returned a non-success status.
+
+### Throws & Validation
+
+| Exception | Condition |
+| :--- | :--- |
+| `IllegalArgumentException` | Thrown immediately before network dispatch if `code.length != 6` or if any character is non-numeric (`code.any { !it.isDigit() }`). |
+| `HermesException.Unauthorized` | HTTP `401 Unauthorized` — Active JWT session has expired or been revoked. |
+| `HermesException.Network` | Network connectivity error or server timeout. |
 
 ---
 
-## 2. Enabling or Updating TOTP Confirmation
+## 2. Network Protocol Specification
 
-To confirm or update a TOTP configuration on an already-authenticated session, invoke `client.totp(code)`:
+### HTTP Request
 
-```kotlin
-viewModelScope.launch {
-    try {
-        val success = client.totp("654321")
-        if (success) {
-            Log.d("Hermes", "TOTP two-factor authentication enabled")
-        }
-    } catch (e: Exception) {
-        Log.e("Hermes", "Failed to confirm TOTP: ${e.message}")
-    }
+```http
+PATCH /v1/user/totp HTTP/1.1
+Host: hermers.aduki.pro
+Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json; charset=utf-8
+Accept: application/json
+
+"123456"
+```
+
+> [!NOTE]
+> The request body is a formatted JSON string literal (`"123456"`), not a JSON object, adhering to Hermes REST API specifications.
+
+### HTTP Response (200 OK / 204 No Content)
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+
+{
+  "status": "enabled",
+  "confirmed": true
 }
 ```
 
-This issues a protected `PATCH /v1/user/totp` request with `Authorization: Bearer <jwt>`, persisting the TOTP status on the Hermes user account.
+---
+
+## 3. Two-Step Verification Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Android UI
+    participant Client as HermesClient
+    participant Server as Hermes REST
+
+    Note over App,Server: Step 1: Interactive Login with 2FA Challenge
+    App->>Client: HermesClient.login(email, pass, totp = null)
+    Client->>Server: POST /v1/auth/login { email, password }
+    Server-->>Client: 401 Unauthorized ("TOTP required")
+    Client-->>App: throws HermesException.Unauthorized
+
+    Note over App,Server: Step 2: User Inputs 6-digit Code
+    App->>Client: HermesClient.login(email, pass, totp = "492810")
+    Client->>Server: POST /v1/auth/login { email, password, totp: "492810" }
+    Server-->>Client: 200 OK { token, refresh, expires }
+    Client-->>App: returns active HermesClient
+
+    Note over App,Server: Step 3: Account Security Management (In-App)
+    App->>Client: client.totp("849201")
+    Client->>Server: PATCH /v1/user/totp "849201"
+    Server-->>Client: 200 OK
+    Client-->>App: returns true
+```
+
+---
+
+## 4. UI Implementation Example
+
+```kotlin
+@Composable
+fun TotpConfirmationDialog(
+    client: HermesClient,
+    onConfirmed: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var code by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Confirm 2FA") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { if (it.length <= 6 && it.all(Char::isDigit)) code = it },
+                    label = { Text("6-Digit Code") },
+                    isError = error != null,
+                    singleLine = true
+                )
+                if (error != null) {
+                    Text(error!!, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (code.length != 6) {
+                        error = "Code must be 6 digits"
+                        return@Button
+                    }
+                    loading = true
+                    error = null
+                    scope.launch {
+                        try {
+                            val ok = client.totp(code)
+                            if (ok) onConfirmed() else error = "Verification failed"
+                        } catch (e: Exception) {
+                            error = e.message ?: "Network error"
+                        } finally {
+                            loading = false
+                        }
+                    }
+                },
+                enabled = !loading && code.length == 6
+            ) {
+                Text(if (loading) "Verifying..." else "Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !loading) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+```
+

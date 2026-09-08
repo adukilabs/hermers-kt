@@ -1,40 +1,73 @@
-# Memory Sanitization
+# Memory Sanitization Reference
 
-Standard Java/Kotlin garbage collection does not guarantee when sensitive memory buffers (such as plaintext passwords or private keys) are overwritten. The Hermes SDK provides zeroization utilities to securely wipe memory buffers immediately after use.
+To defend against heap memory dumping and side-channel memory inspection, the Hermes Android SDK provides zeroization utilities that overwrite sensitive buffers (`Arrays.fill(0)`) immediately after consumption.
 
 ---
 
-## 1. Automated Scrubber (`Guard`)
-
-The `Guard` class implements `AutoCloseable`, automatically zeroing byte or char buffers upon exiting a block:
+## 1. Class & Function Signatures
 
 ```kotlin
-val passwordChars = charArrayOf('S', 'e', 'c', 'u', 'r', 'e', '!')
+package pro.aduki.hermes.core.memory
 
-Guard(passwordChars).use { guard ->
-    // Use passwordChars safely inside this block
-    authenticate(passwordChars)
+/**
+ * Overwrites all bytes in the array with zeros.
+ */
+fun wipe(bytes: ByteArray)
+
+/**
+ * Overwrites all characters in the array with null characters ('\u0000').
+ */
+fun wipe(chars: CharArray)
+
+/**
+ * Scopes execution of a ByteArray, guaranteeing zeroization upon block completion.
+ */
+inline fun <R> withWipedBytes(bytes: ByteArray, block: (ByteArray) -> R): R
+
+/**
+ * Scopes execution of a CharArray, guaranteeing zeroization upon block completion.
+ */
+inline fun <R> withWipedChars(chars: CharArray, block: (CharArray) -> R): R
+```
+
+```kotlin
+package pro.aduki.hermes.crypto.sanitizer
+
+/**
+ * AutoCloseable container that scrubs sensitive buffers upon close().
+ */
+class Guard<T>(val target: T) : AutoCloseable {
+    override fun close()
 }
-
-// Outside the block, passwordChars contains only '\u0000'
 ```
 
 ---
 
-## 2. Functional Scrubber Utilities
-
-In `core/memory/wipe.kt`:
+## 2. Functional Scrubber Usage
 
 ```kotlin
-// Secure byte array execution
-val result = withWipedBytes(byteArrayOf(1, 2, 3, 4)) { bytes ->
-    processKey(bytes)
+val derivedKey = withWipedChars(password.toCharArray()) { chars ->
+    // Key derivation executes with cleartext chars
+    pbkdf2(chars, salt)
 }
-
-// Secure char array execution
-val token = withWipedChars(rawPassword.toCharArray()) { chars ->
-    deriveKey(chars)
-}
+// Outside the block, chars is guaranteed filled with '\u0000'
 ```
 
-Both utilities guarantee `Arrays.fill(0)` is invoked in a `finally` block, ensuring memory is cleansed even if an uncaught exception is thrown.
+---
+
+## 3. AutoCloseable `Guard` Pattern
+
+When passing sensitive memory buffers across multiple asynchronous or synchronous processing stages:
+
+```kotlin
+val sensitiveBytes = retrieveSecretKeyBytes()
+
+Guard(sensitiveBytes).use { guard ->
+    // The wrapped buffer is accessible via guard.target
+    val hash = computeHmac(guard.target, message)
+    sendVerification(hash)
+}
+
+// Immediately upon exiting the use block, sensitiveBytes contains all zeros
+```
+

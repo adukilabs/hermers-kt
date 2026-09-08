@@ -1,30 +1,54 @@
-# TLS & Certificate Pinning
+# TLS & Certificate Pinning Reference
 
-To safeguard against rogue Certificate Authorities (CAs) and adversary-in-the-middle (AITM) attacks, the Hermes Android SDK enforces strict transport layer security.
+To eliminate man-in-the-middle (MITM) risks and defend against compromised certificate authority (CA) root stores, the Hermes Android SDK enforces certificate public key pinning and restricted forward-secret TLS 1.3 cipher suites.
 
 ---
 
-## 1. SPKI Certificate Pinning
-
-The SDK utilizes SHA-256 Subject Public Key Info (SPKI) hashes pinned to the official Hermes production and staging infrastructure:
+## 1. Class & Method Signatures
 
 ```kotlin
-val certificatePinner = CertificatePinner.Builder()
-    .add("*.aduki.pro", "sha256/k2oTQLGenANUdY3TR1Wd5rvUgUhysw+TGgcUJWZChd4=")
-    .add("*.aduki.pro", "sha256/FEzVOUp4dF3gI0ZVPRJhFbS1c49mmG820f18LMMAmrA=") // Backup root
-    .build()
+package pro.aduki.hermes.crypto.tls
+
+import okhttp3.CertificatePinner
+import okhttp3.ConnectionSpec
+
+object Pinning {
+    fun create(vararg pins: Pair<String, String>): CertificatePinner
+    fun spec(): ConnectionSpec
+}
 ```
 
 ---
 
-## 2. TLS 1.3 Restricted ConnectionSpec
+## 2. SPKI Public Key Pinset
 
-Cleartext HTTP traffic is strictly prohibited. The SDK enforces TLS 1.3 and TLS 1.2 with forward-secret cipher suites:
+The SDK enforces SHA-256 Subject Public Key Info (SPKI) hashes:
 
-- `TLS_AES_128_GCM_SHA256`
-- `TLS_AES_256_GCM_SHA384`
-- `TLS_CHACHA20_POLY1305_SHA256`
-- `TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256`
-- `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`
+```kotlin
+val pinner = CertificatePinner.Builder()
+    .add("*.aduki.pro", "sha256/k2oTQLGenANUdY3TR1Wd5rvUgUhysw+TGgcUJWZChd4=")
+    .add("*.aduki.pro", "sha256/FEzVOUp4dF3gI0ZVPRJhFbS1c49mmG820f18LMMAmrA=") // Backup pin
+    .build()
+```
 
-Insecure cipher suites (CBC mode, 3DES, RC4) and outdated protocols (TLS 1.0, 1.1) are rejected at the socket layer.
+If a middlebox, proxy, or rogue CA intercepts the TLS handshake, OkHttp immediately aborts the connection with `javax.net.ssl.SSLPeerUnverifiedException` before any HTTP headers or auth tokens are transmitted.
+
+---
+
+## 3. Restricted Connection Spec & Forward Secrecy
+
+The SDK configures `ConnectionSpec` to enforce modern, forward-secret cipher suites:
+
+```kotlin
+val spec = ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+    .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
+    .cipherSuites(
+        CipherSuite.TLS_AES_128_GCM_SHA256,
+        CipherSuite.TLS_AES_256_GCM_SHA384,
+        CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
+        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+        CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+    )
+    .build()
+```
+

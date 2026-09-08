@@ -14,6 +14,9 @@ sealed class HermesException(
     class Auth(message: String, cause: Throwable? = null) :
         HermesException(message, cause)
 
+    class Unauthorized(message: String, cause: Throwable? = null) :
+        HermesException(message, cause)
+
     class Storage(message: String, cause: Throwable? = null) :
         HermesException(message, cause)
 
