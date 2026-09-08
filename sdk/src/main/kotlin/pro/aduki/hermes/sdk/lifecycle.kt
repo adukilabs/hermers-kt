@@ -41,3 +41,4 @@ class Lifecycle {
         listeners.add(listener)
     }
 }
+
