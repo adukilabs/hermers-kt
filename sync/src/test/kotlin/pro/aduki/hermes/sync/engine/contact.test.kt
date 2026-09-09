@@ -75,8 +75,8 @@ class ContactTest {
         assertNotNull(c3)
         assertEquals("Charlie", c3!!.name)
 
-        // Cursor was saved
-        assertEquals("ctag_v2", storage.getSync("contacts")!!.cursor)
+        // Token was saved
+        assertEquals("ctag_v2", storage.getSync("contacts")!!.token)
     }
 }
 

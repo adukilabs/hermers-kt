@@ -5,12 +5,12 @@ import io.objectbox.annotation.Id
 import io.objectbox.annotation.Index
 
 /**
- * Sync stores cursor state for delta synchronizers.
+ * Sync stores token state for delta synchronizers.
  */
 @Entity
 data class Sync(
     @Id var id: Long = 0,
     @Index var target: String = "", // "contacts", "mailbox_hex"
-    var cursor: String = "",
+    var token: String = "",
     var timestamp: Long = 0
 )

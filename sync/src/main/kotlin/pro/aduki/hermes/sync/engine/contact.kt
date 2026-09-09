@@ -60,8 +60,8 @@ class Contact(
      * Performs incremental delta sync for contacts in the given tenant.
      */
     suspend fun sync(tenant: String): Boolean {
-        val syncRecord = storage.getSync("contacts") ?: Sync(target = "contacts", cursor = "")
-        val delta = transport.fetch(tenant, syncRecord.cursor)
+        val syncRecord = storage.getSync("contacts") ?: Sync(target = "contacts", token = "")
+        val delta = transport.fetch(tenant, syncRecord.token)
 
         return storage.tx {
             if (delta.removed.isNotEmpty()) {
@@ -77,7 +77,7 @@ class Contact(
                 storage.putContacts(merged)
             }
 
-            syncRecord.cursor = delta.ctag
+            syncRecord.token = delta.ctag
             syncRecord.timestamp = System.currentTimeMillis()
             storage.putSync(syncRecord)
             true
