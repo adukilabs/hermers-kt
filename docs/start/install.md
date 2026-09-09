@@ -9,23 +9,27 @@ This guide walks you through integrating the Hermes Android Kotlin SDK into your
 - **Android Studio**: Hedgehog (2023.1.1) or newer.
 - **Minimum SDK**: Android API 26 (Android 8.0 Oreo) or higher.
 - **Target SDK**: Android API 34+ (Android 14).
-- **Kotlin Version**: 1.9.20+ or 2.0.0+.
+- **Kotlin Version**: 2.0.21+.
 - **ObjectBox Version**: 4.0.3.
 
 ---
 
 ## 2. Configure Repositories
 
-Add `mavenCentral()` and the JitPack repository to your `settings.gradle.kts`:
+Because Hermes is published to **Maven Central**, no custom repository configuration is needed if your project already includes `mavenCentral()`:
 
 ```kotlin
+// settings.gradle.kts
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") }
-        // Or GitHub Packages:
+        
+        // Optional JitPack mirror:
+        // maven { url = uri("https://jitpack.io") }
+
+        // Optional GitHub Packages repository:
         // maven {
         //     url = uri("https://maven.pkg.github.com/adukilabs/hermers-kt")
         //     credentials {
@@ -63,15 +67,15 @@ plugins {
 
 ## 4. Add Dependencies
 
-Add the Hermes SDK and related runtime libraries to `app/build.gradle.kts`:
+Add the Hermes SDK to `app/build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    // Hermes Android SDK Facade (JitPack)
-    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.1")
+    // Hermes Android SDK Facade (Maven Central)
+    implementation("io.github.adukilabs:sdk:0.1.2")
 
-    // Or via Maven Central / GitHub Packages:
-    // implementation("io.github.adukilabs:sdk:0.1.1")
+    // Or via JitPack mirror:
+    // implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.2")
 
     // ObjectBox Zero-Copy Persistent Engine
     implementation("io.objectbox:objectbox-kotlin:4.0.3")
@@ -86,6 +90,20 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }
 ```
+
+### Granular Module Artifacts
+
+If your application only needs specific subsystems, you can import individual modules:
+
+| Module | Maven Coordinate | Purpose |
+| :--- | :--- | :--- |
+| **SDK Facade** | `io.github.adukilabs:sdk:0.1.2` | Unified Hermes client entrypoint |
+| **State** | `io.github.adukilabs:state:0.1.2` | Live query observers & StateFlow feeds |
+| **Sync** | `io.github.adukilabs:sync:0.1.2` | RFC 7162 CONDSTORE synchronizer & Outbox |
+| **Store** | `io.github.adukilabs:store:0.1.2` | ObjectBox FlatBuffers models |
+| **Net** | `io.github.adukilabs:net:0.1.2` | HTTP/2 REST client & Auth tokens |
+| **Crypto** | `io.github.adukilabs:crypto:0.1.2` | Android KeyStore & AES-256-GCM cipher |
+| **Core** | `io.github.adukilabs:core:0.1.2` | RingBuffer, Jitter, Memory safety |
 
 ---
 
