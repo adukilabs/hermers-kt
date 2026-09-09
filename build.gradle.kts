@@ -56,12 +56,16 @@ subprojects {
 
             repositories {
                 maven {
-                    name = "GitHubPackages"
+                    name = "github"
                     url = uri("https://maven.pkg.github.com/adukilabs/hermers-kt")
                     credentials {
                         username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
                         password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
                     }
+                }
+                maven {
+                    name = "local"
+                    url = uri(rootProject.layout.buildDirectory.dir("repo"))
                 }
             }
         }
@@ -75,6 +79,13 @@ subprojects {
             }
         }
     }
+}
+
+tasks.register<Zip>("bundle") {
+    dependsOn(subprojects.map { it.tasks.matching { t -> t.name == "publishMavenPublicationToLocalRepository" } })
+    from(layout.buildDirectory.dir("repo"))
+    archiveFileName.set("bundle.zip")
+    destinationDirectory.set(layout.buildDirectory)
 }
 
 

@@ -39,5 +39,42 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-        run: gradle publish
+        run: gradle publish bundle
+
+      - name: central
+        env:
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        run: |
+          TOKEN=$(printf "%s:%s" "$SONATYPE_USERNAME" "$SONATYPE_PASSWORD" | tr -d '\n' | base64 | tr -d '\n')
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "https://central.sonatype.com/api/v1/publisher/upload?publishingType=AUTOMATIC" \
+            -H "Authorization: Bearer $TOKEN" \
+            -F "bundle=@build/bundle.zip")
+          CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "Status: $CODE"
+          echo "Body: $BODY"
+          if [ "$CODE" -ne 201 ] && [ "$CODE" -ne 200 ]; then
+            echo "Failed to upload to Maven Central"
+            exit 1
+          fi
+          DEPLOYMENT_ID=$(echo "$BODY" | tr -d '"')
+          echo "Deployment ID: $DEPLOYMENT_ID"
+          if [ -n "$DEPLOYMENT_ID" ] && [ "$DEPLOYMENT_ID" != "null" ]; then
+            echo "Checking deployment status..."
+            for i in {1..20}; do
+              STATUS=$(curl -s -X POST "https://central.sonatype.com/api/v1/publisher/status?id=$DEPLOYMENT_ID" \
+                -H "Authorization: Bearer $TOKEN")
+              echo "Status: $STATUS"
+              STATE=$(echo "$STATUS" | grep -o '"deploymentState":"[^"]*"' | cut -d':' -f2 | tr -d '"')
+              if [ "$STATE" = "PUBLISHED" ] || [ "$STATE" = "VALIDATED" ]; then
+                echo "Deployment successful: $STATE"
+                break
+              elif [ "$STATE" = "FAILED" ]; then
+                echo "Deployment failed!"
+                exit 1
+              fi
+              sleep 5
+            done
+          fi
 
