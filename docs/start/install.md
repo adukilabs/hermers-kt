@@ -68,10 +68,10 @@ Add the Hermes SDK and related runtime libraries to `app/build.gradle.kts`:
 ```kotlin
 dependencies {
     // Hermes Android SDK Facade (JitPack)
-    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.0")
+    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.1")
 
     // Or via Maven Central / GitHub Packages:
-    // implementation("io.github.adukilabs:sdk:0.1.0")
+    // implementation("io.github.adukilabs:sdk:0.1.1")
 
     // ObjectBox Zero-Copy Persistent Engine
     implementation("io.objectbox:objectbox-kotlin:4.0.3")

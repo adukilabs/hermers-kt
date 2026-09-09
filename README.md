@@ -39,7 +39,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.0")
+    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.1")
     implementation("io.objectbox:objectbox-android:4.0.3")
 }
 ```
