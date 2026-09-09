@@ -16,10 +16,13 @@ import pro.aduki.hermes.state.repository.Session
 
 import pro.aduki.hermes.sync.engine.Contact as ContactEngine
 import pro.aduki.hermes.sync.engine.Mailbox as MailboxEngine
+import pro.aduki.hermes.sync.engine.Schedule as ScheduleEngine
 import pro.aduki.hermes.sync.outbox.Manager
 import pro.aduki.hermes.sync.outbox.Worker
 import pro.aduki.hermes.state.repository.Contact as ContactRepo
 import pro.aduki.hermes.state.repository.Mail as MailRepo
+import pro.aduki.hermes.state.repository.Appointment as AppointmentRepo
+import pro.aduki.hermes.net.http.Scheduling as NetScheduling
 
 /**
  * HermesClient is the primary entrypoint for the Android Kotlin SDK.
@@ -35,13 +38,16 @@ class HermesClient internal constructor(
     worker: Worker? = null,
     mailRepo: MailRepo? = null,
     contactRepo: ContactRepo? = null,
+    appointmentRepo: AppointmentRepo? = null,
     mailboxEngine: MailboxEngine? = null,
     contactEngine: ContactEngine? = null,
+    scheduleEngine: ScheduleEngine? = null,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 ) {
     val mail = Mail(this, manager, mailRepo, worker)
     val contacts = Contacts(this, contactRepo, contactEngine)
     val sync = Sync(this, mailboxEngine, contactEngine, worker, manager)
+    val scheduling = Scheduling(this, appointmentRepo, scheduleEngine, NetScheduling(activeHttpClient(), options.endpoint))
 
     private fun activeAuthString(): String {
         return session.token() ?: if (token.isNotBlank()) token else apiKey
@@ -161,6 +167,8 @@ class HermesClient internal constructor(
         private var contactRepo: ContactRepo? = null
         private var mailboxEngine: MailboxEngine? = null
         private var contactEngine: ContactEngine? = null
+        private var appointmentRepo: AppointmentRepo? = null
+        private var scheduleEngine: ScheduleEngine? = null
 
         fun key(key: String) = apply { this.apiKey = key }
         fun token(token: String) = apply { this.token = token }
@@ -176,6 +184,10 @@ class HermesClient internal constructor(
         fun worker(worker: Worker) = apply { this.worker = worker }
         fun mail(repo: MailRepo) = apply { this.mailRepo = repo }
         fun contacts(repo: ContactRepo) = apply { this.contactRepo = repo }
+        fun scheduling(repo: AppointmentRepo, engine: ScheduleEngine? = null) = apply {
+            this.appointmentRepo = repo
+            this.scheduleEngine = engine
+        }
         fun engines(mailbox: MailboxEngine, contact: ContactEngine) = apply {
             this.mailboxEngine = mailbox
             this.contactEngine = contact
@@ -201,8 +213,10 @@ class HermesClient internal constructor(
                 worker = worker,
                 mailRepo = mailRepo,
                 contactRepo = contactRepo,
+                appointmentRepo = appointmentRepo,
                 mailboxEngine = mailboxEngine,
-                contactEngine = contactEngine
+                contactEngine = contactEngine,
+                scheduleEngine = scheduleEngine
             )
         }
     }
