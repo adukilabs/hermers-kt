@@ -72,7 +72,7 @@ class Mail(
     fun mailboxes(): StateFlow<List<Mailbox>> {
         return source.mailboxes().stateIn(
             scope = scope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
     }
@@ -83,7 +83,7 @@ class Mail(
     fun messages(mailboxHex: String): StateFlow<List<Message>> {
         return source.messages(mailboxHex).stateIn(
             scope = scope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
     }
@@ -94,7 +94,7 @@ class Mail(
     fun message(hex: String): StateFlow<Message?> {
         return source.message(hex).stateIn(
             scope = scope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = source.getMessage(hex)
         )
     }
@@ -107,7 +107,7 @@ class Mail(
             .map { list -> list.count { !it.seen() } }
             .stateIn(
                 scope = scope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.Eagerly,
                 initialValue = 0
             )
     }

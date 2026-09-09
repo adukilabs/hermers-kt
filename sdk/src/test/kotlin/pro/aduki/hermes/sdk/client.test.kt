@@ -13,6 +13,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import pro.aduki.hermes.core.models.Identity
+import pro.aduki.hermes.state.repository.ContactSource
 import pro.aduki.hermes.state.repository.MailSource
 import pro.aduki.hermes.core.models.Tokens
 

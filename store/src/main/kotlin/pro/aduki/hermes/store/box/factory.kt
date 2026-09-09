@@ -13,6 +13,7 @@ object Factory {
     /**
      * Builds BoxStore configuration targeting specified directory and optional encryption key.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun create(dir: File, key: ByteArray? = null): BoxStoreBuilder {
         return MyObjectBox.builder().directory(dir)
     }

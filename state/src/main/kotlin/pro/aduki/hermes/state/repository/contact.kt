@@ -43,7 +43,7 @@ class Contact(
             .map { list -> list.sortedBy { it.name } }
             .stateIn(
                 scope = scope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.Eagerly,
                 initialValue = emptyList()
             )
     }
@@ -67,7 +67,7 @@ class Contact(
             }
             .stateIn(
                 scope = scope,
-                started = SharingStarted.WhileSubscribed(5000),
+                started = SharingStarted.Eagerly,
                 initialValue = emptyList()
             )
     }

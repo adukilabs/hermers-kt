@@ -21,11 +21,11 @@ class MailboxTest {
         override fun putMailbox(mailbox: MailboxEntity) { mailboxes[mailbox.hex] = mailbox }
         override fun getMessages(mailboxHex: String): List<Message> =
             messages.values.filter { it.mailbox == mailboxHex }
-        override fun putMessages(msgs: List<Message>) {
-            msgs.forEach { messages[it.id] = it }
+        override fun putMessages(messages: List<Message>) {
+            messages.forEach { this.messages[it.id] = it }
         }
-        override fun removeMessages(msgs: List<Message>) {
-            msgs.forEach { messages.remove(it.id) }
+        override fun removeMessages(messages: List<Message>) {
+            messages.forEach { this.messages.remove(it.id) }
         }
         override fun clearMailbox(mailboxHex: String) {
             val toRemove = messages.values.filter { it.mailbox == mailboxHex }.map { it.id }
