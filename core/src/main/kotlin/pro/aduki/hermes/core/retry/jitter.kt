@@ -16,7 +16,7 @@ class Jitter(
     /**
      * Calculates the next backoff delay.
      */
-    fun next(): Long {
+    fun next(attempt: Int = 0): Long {
         val bound = if (delay * 3 > base) delay * 3 else base + 1
         val next = random.nextLong(base, bound)
         delay = min(max, next)
