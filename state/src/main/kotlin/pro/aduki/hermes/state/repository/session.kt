@@ -4,19 +4,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import pro.aduki.hermes.core.models.Identity
+import pro.aduki.hermes.core.models.Tokens
 
 /**
  * Type alias to core Identity model.
  */
 typealias Identity = pro.aduki.hermes.core.models.Identity
 
-
-import pro.aduki.hermes.core.models.Tokens
-
 /**
  * Type alias for Tokens.
  */
 typealias Tokens = pro.aduki.hermes.core.models.Tokens
+
 
 
 /**
