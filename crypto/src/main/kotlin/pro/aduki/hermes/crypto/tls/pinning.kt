@@ -16,7 +16,7 @@ object Pinning {
     const val PIN_PRIMARY = "sha256/WoiWRyIOVNa9ihaBciRSC7XHjliYS9VwUGOIud4PB18="
 
     // Backup pin for key rotation
-    const val PIN_BACKUP = "sha256/k2/402iK90558661mndnnd901002872365287293847="
+    const val PIN_BACKUP = "sha256/2k2i402K90558661mndnnd901002872365287293848="
 
     /**
      * Builds CertificatePinner enforced on Hermes production domains.
@@ -34,7 +34,6 @@ object Pinning {
     fun specs(): List<ConnectionSpec> {
         val spec = ConnectionSpec.Builder(ConnectionSpec.RESTRICTED_TLS)
             .tlsVersions(TlsVersion.TLS_1_3, TlsVersion.TLS_1_2)
-            .supportsTlsExtensions(true)
             .build()
         return listOf(spec)
     }

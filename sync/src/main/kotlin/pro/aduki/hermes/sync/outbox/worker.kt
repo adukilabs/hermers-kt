@@ -25,10 +25,13 @@ class Worker(
      */
     suspend fun drain(): Int {
         val now = System.currentTimeMillis()
-        val pending = manager.pending().filter { it.nextRetry <= now }
         var successCount = 0
 
-        for (action in pending) {
+        for (action in manager.pending()) {
+            if (action.nextRetry > now) {
+                // Break to preserve sequential outbox ordering
+                break
+            }
             val ok = process(action)
             if (ok) {
                 successCount++
@@ -46,7 +49,7 @@ class Worker(
     suspend fun process(action: Outbox): Boolean {
         return try {
             dispatcher.dispatch(action)
-            val hex = extractHex(action)
+            val hex = action.hex.ifBlank { extractHex(action) }
             manager.complete(action.id, hex)
             true
         } catch (_: Exception) {

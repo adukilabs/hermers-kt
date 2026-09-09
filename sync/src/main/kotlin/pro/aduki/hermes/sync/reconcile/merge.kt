@@ -46,7 +46,7 @@ object Reconcile {
         return if (local.updated > server.updated) {
             local
         } else {
-            server
+            server.copy(id = local.id)
         }
     }
 }

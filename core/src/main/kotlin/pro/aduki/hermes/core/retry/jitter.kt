@@ -1,5 +1,6 @@
 package pro.aduki.hermes.core.retry
 
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 import kotlin.random.Random
 
@@ -11,29 +12,30 @@ class Jitter(
     val max: Long = 30_000,
     private val random: Random = Random.Default
 ) {
-    private var delay: Long = base
+    private val delay = AtomicLong(base)
 
     /**
      * Calculates the next backoff delay.
      */
     fun next(attempt: Int = 0): Long {
-        val bound = if (delay * 3 > base) delay * 3 else base + 1
-        val next = random.nextLong(base, bound)
-        delay = min(max, next)
-        return delay
+        return delay.updateAndGet { current ->
+            val bound = if (current * 3 > base) current * 3 else base + 1
+            val next = random.nextLong(base, bound)
+            min(max, next)
+        }
     }
 
     /**
      * Resets delay to base.
      */
     fun reset() {
-        delay = base
+        delay.set(base)
     }
 
     /**
      * Current delay value.
      */
-    fun current(): Long = delay
+    fun current(): Long = delay.get()
 }
 
 /**

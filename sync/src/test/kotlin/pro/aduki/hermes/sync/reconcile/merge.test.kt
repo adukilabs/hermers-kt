@@ -58,10 +58,11 @@ class MergeTest {
 
     @Test
     fun testContactApplyNewerServer() {
-        val local = pro.aduki.hermes.store.entities.Contact(hex = "c2", name = "Old Bob", updated = 1000L)
-        val server = pro.aduki.hermes.store.entities.Contact(hex = "c2", name = "New Bob", updated = 3000L)
+        val local = pro.aduki.hermes.store.entities.Contact(id = 42L, hex = "c2", name = "Old Bob", updated = 1000L)
+        val server = pro.aduki.hermes.store.entities.Contact(id = 0L, hex = "c2", name = "New Bob", updated = 3000L)
         val merged = Reconcile.contact(local, server)
         assertEquals("New Bob", merged.name)
+        assertEquals(42L, merged.id)
     }
 }
 

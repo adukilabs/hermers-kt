@@ -40,5 +40,12 @@ class Lifecycle {
     fun listen(listener: (Boolean) -> Unit) {
         listeners.add(listener)
     }
+
+    /**
+     * Unregisters a lifecycle state change listener.
+     */
+    fun remove(listener: (Boolean) -> Unit) {
+        listeners.remove(listener)
+    }
 }
 

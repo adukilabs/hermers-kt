@@ -47,8 +47,31 @@ class HermesClient internal constructor(
         return session.token() ?: if (token.isNotBlank()) token else apiKey
     }
 
+    private val defaultClient: OkHttpClient by lazy {
+        val pinner = if (options.secure && !options.endpoint.contains("localhost") && !options.endpoint.contains("127.0.0.1")) {
+            pro.aduki.hermes.crypto.tls.Pinning.pinner()
+        } else {
+            null
+        }
+        val base = HttpClient.create(activeAuthString(), options.timeoutSeconds, pinner)
+        base.newBuilder()
+            .addInterceptor { chain ->
+                val auth = activeAuthString()
+                val request = if (auth.isNotBlank()) {
+                    val authHeader = if (auth.startsWith("hm_") || auth.startsWith("key_")) "Key $auth" else "Bearer $auth"
+                    chain.request().newBuilder()
+                        .header("Authorization", authHeader)
+                        .build()
+                } else {
+                    chain.request()
+                }
+                chain.proceed(request)
+            }
+            .build()
+    }
+
     private fun activeHttpClient(): OkHttpClient {
-        return httpClient ?: HttpClient.create(activeAuthString(), options.timeoutSeconds)
+        return httpClient ?: defaultClient
     }
 
     init {
@@ -196,7 +219,7 @@ class HermesClient internal constructor(
             totp: String? = null,
             endpoint: String = Endpoints.REST
         ): HermesClient {
-            val tempClient = OkHttpClient()
+            val tempClient = HttpClient.create("", 15)
             val tokens = Login.submit(tempClient, endpoint, email, password, totp)
             val client = builder()
                 .endpoint(endpoint)

@@ -113,7 +113,16 @@ class Mailbox(
             // 4. Insert newly discovered UIDs
             val newMsgs = delta.messages.filter { it.uid in delta.newUids }
             if (newMsgs.isNotEmpty()) {
-                storage.putMessages(newMsgs)
+                val existingByHex = current.associateBy { it.hex }
+                val resolvedNew = newMsgs.map { newMsg ->
+                    val existing = existingByHex[newMsg.hex]
+                    if (existing != null) {
+                        newMsg.copy(id = existing.id)
+                    } else {
+                        newMsg
+                    }
+                }
+                storage.putMessages(resolvedNew)
             }
 
             // 5. Advance mailbox modseq

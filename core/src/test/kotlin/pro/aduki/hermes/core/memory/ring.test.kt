@@ -33,5 +33,14 @@ class RingTest {
         assertEquals(1, ring.poll())
         assertTrue(ring.offer(3)) // Space freed
     }
+
+    @Test
+    fun testZeroCapacityDefaultsToOne() {
+        val ring = Ring<Int>(capacity = 0)
+        assertTrue(ring.empty())
+        assertTrue(ring.offer(42))
+        assertFalse(ring.offer(43)) // Capacity 1 is now full
+        assertEquals(42, ring.poll())
+    }
 }
 

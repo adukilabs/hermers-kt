@@ -26,7 +26,8 @@ class Manager(private val storage: Storage) {
         private val messages = store.boxFor(Message::class.java)
         private val outbox = store.boxFor(Outbox::class.java)
 
-        override fun getMessage(hex: String): Message? = messages.all.firstOrNull { it.hex == hex }
+        override fun getMessage(hex: String): Message? =
+            messages.query(pro.aduki.hermes.store.entities.Message_.hex.equal(hex)).build().findFirst()
         override fun putMessage(msg: Message) { messages.put(msg) }
         override fun getOutbox(id: Long): Outbox? = outbox.get(id)
         override fun putOutbox(entry: Outbox): Long = outbox.put(entry)
@@ -49,6 +50,7 @@ class Manager(private val storage: Storage) {
 
             val payload = "$hex:$flag".toByteArray(Charsets.UTF_8)
             val entry = Outbox(
+                hex = hex,
                 action = "flag",
                 payload = payload,
                 created = System.currentTimeMillis()
@@ -72,6 +74,7 @@ class Manager(private val storage: Storage) {
 
             val payload = "$hex:$dest".toByteArray(Charsets.UTF_8)
             val entry = Outbox(
+                hex = hex,
                 action = "move",
                 payload = payload,
                 created = System.currentTimeMillis()
@@ -90,6 +93,7 @@ class Manager(private val storage: Storage) {
             storage.putMessage(msg)
 
             val entry = Outbox(
+                hex = msg.hex,
                 action = "send",
                 payload = raw,
                 created = System.currentTimeMillis()
@@ -113,6 +117,7 @@ class Manager(private val storage: Storage) {
 
             val payload = hex.toByteArray(Charsets.UTF_8)
             val entry = Outbox(
+                hex = hex,
                 action = "delete",
                 payload = payload,
                 created = System.currentTimeMillis()
@@ -125,8 +130,9 @@ class Manager(private val storage: Storage) {
     /**
      * Manually enqueues an outbox action.
      */
-    fun enqueue(action: String, payload: ByteArray): Outbox {
+    fun enqueue(action: String, payload: ByteArray, hex: String = ""): Outbox {
         val entry = Outbox(
+            hex = hex,
             action = action,
             payload = payload,
             created = System.currentTimeMillis()
@@ -162,10 +168,12 @@ class Manager(private val storage: Storage) {
      * Records a failed dispatch attempt, scheduling the next retry.
      */
     fun fail(id: Long, delay: Long) {
-        val entry = storage.getOutbox(id) ?: return
-        entry.attempts += 1
-        entry.nextRetry = System.currentTimeMillis() + delay
-        storage.putOutbox(entry)
+        storage.tx {
+            val entry = storage.getOutbox(id) ?: return@tx
+            entry.attempts += 1
+            entry.nextRetry = System.currentTimeMillis() + delay
+            storage.putOutbox(entry)
+        }
     }
 }
 

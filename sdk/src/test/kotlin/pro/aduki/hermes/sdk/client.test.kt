@@ -128,6 +128,19 @@ class ClientTest {
     }
 
     @Test
+    fun testLifecycleListenerRemoval() {
+        val lifecycle = Lifecycle()
+        var count = 0
+        val listener: (Boolean) -> Unit = { count++ }
+        lifecycle.listen(listener)
+        lifecycle.pause()
+        assertEquals(1, count)
+        lifecycle.remove(listener)
+        lifecycle.resume()
+        assertEquals(1, count)
+    }
+
+    @Test
     fun testMailFacadeSendAndOutbox() = runBlocking {
         val storage = TestStorage()
         val manager = Manager(storage)

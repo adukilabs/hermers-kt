@@ -56,8 +56,12 @@ object Login {
 
             val body = response.body?.string() ?: throw HermesException.Network("Empty response from login")
             val json = JSONObject(body)
+            val token = json.optString("token", "")
+            if (token.isBlank()) {
+                throw HermesException.Auth("Missing access token in login response")
+            }
             return Tokens(
-                token = json.optString("token", ""),
+                token = token,
                 refresh = json.optString("refresh", ""),
                 expires = json.optString("expires", "")
             )
@@ -92,8 +96,12 @@ object Login {
 
             val body = response.body?.string() ?: throw HermesException.Network("Empty response from refresh")
             val json = JSONObject(body)
+            val token = json.optString("token", "")
+            if (token.isBlank()) {
+                throw HermesException.Auth("Missing access token in refresh response")
+            }
             return Tokens(
-                token = json.optString("token", ""),
+                token = token,
                 refresh = json.optString("refresh", ""),
                 expires = json.optString("expires", "")
             )
@@ -109,9 +117,10 @@ object Login {
         token: String
     ): Boolean {
         val url = "${endpoint.trimEnd('/')}/auth/logout"
+        val authHeader = if (token.startsWith("hm_") || token.startsWith("key_")) "Key $token" else "Bearer $token"
         val request = Request.Builder()
             .url(url)
-            .header("Authorization", if (token.startsWith("hm_")) "Key $token" else "Bearer $token")
+            .header("Authorization", authHeader)
             .post("{}".toRequestBody(JSON))
             .build()
 
@@ -137,9 +146,10 @@ object Login {
 
         val url = "${endpoint.trimEnd('/')}/user/totp"
         val payload = JSONObject.quote(code) // Valid JSON string representation
+        val authHeader = if (token.startsWith("hm_") || token.startsWith("key_")) "Key $token" else "Bearer $token"
         val request = Request.Builder()
             .url(url)
-            .header("Authorization", if (token.startsWith("hm_")) "Key $token" else "Bearer $token")
+            .header("Authorization", authHeader)
             .patch(payload.toRequestBody(JSON))
             .build()
 

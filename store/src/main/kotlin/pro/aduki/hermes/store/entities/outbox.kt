@@ -10,6 +10,7 @@ import io.objectbox.annotation.Index
 @Entity
 data class Outbox(
     @Id var id: Long = 0,
+    @Index var hex: String = "",
     @Index var action: String = "", // "send", "flag", "move", "delete"
     var payload: ByteArray = byteArrayOf(),
     @Index var created: Long = System.currentTimeMillis(),

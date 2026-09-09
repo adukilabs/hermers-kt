@@ -2,15 +2,18 @@ package pro.aduki.hermes.state.repository
 
 import io.objectbox.BoxStore
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.util.concurrent.ConcurrentHashMap
 import pro.aduki.hermes.store.entities.Mailbox
+import pro.aduki.hermes.store.entities.Mailbox_
 import pro.aduki.hermes.store.entities.Message
+import pro.aduki.hermes.store.entities.Message_
 import pro.aduki.hermes.sync.outbox.Manager
 
 /**
@@ -38,78 +41,94 @@ class Mail(
             private val mailboxBox = store.boxFor(Mailbox::class.java)
             private val messageBox = store.boxFor(Message::class.java)
 
-            override fun mailboxes(): Flow<List<Mailbox>> {
-                return MutableStateFlow(mailboxBox.all)
+            override fun mailboxes(): Flow<List<Mailbox>> = callbackFlow {
+                val query = mailboxBox.query().order(Mailbox_.name).build()
+                val sub = query.subscribe().observer { data -> trySend(data) }
+                awaitClose { sub.cancel() }
             }
 
-            override fun messages(mailboxHex: String): Flow<List<Message>> {
-                return MutableStateFlow(
-                    messageBox.all
-                        .filter { it.mailbox == mailboxHex }
-                        .sortedByDescending { it.date }
-                )
+            override fun messages(mailboxHex: String): Flow<List<Message>> = callbackFlow {
+                val query = messageBox.query(Message_.mailbox.equal(mailboxHex))
+                    .orderDesc(Message_.date)
+                    .build()
+                val sub = query.subscribe().observer { data -> trySend(data) }
+                awaitClose { sub.cancel() }
             }
 
-            override fun message(hex: String): Flow<Message?> {
-                return MutableStateFlow(messageBox.all.firstOrNull { it.hex == hex })
+            override fun message(hex: String): Flow<Message?> = callbackFlow {
+                val query = messageBox.query(Message_.hex.equal(hex)).build()
+                val sub = query.subscribe().observer { data -> trySend(data.firstOrNull()) }
+                awaitClose { sub.cancel() }
             }
 
             override fun getMessage(hex: String): Message? {
-                return messageBox.all.firstOrNull { it.hex == hex }
+                return messageBox.query(Message_.hex.equal(hex)).build().findFirst()
             }
 
             override fun getMailbox(hex: String): Mailbox? {
-                return mailboxBox.all.firstOrNull { it.hex == hex }
+                return mailboxBox.query(Mailbox_.hex.equal(hex)).build().findFirst()
             }
         },
         manager = manager,
         scope = scope
     )
 
-    /**
-     * Hot StateFlow of all mailboxes.
-     */
-    fun mailboxes(): StateFlow<List<Mailbox>> {
-        return source.mailboxes().stateIn(
+    private val mailboxesFlow: StateFlow<List<Mailbox>> by lazy {
+        source.mailboxes().stateIn(
             scope = scope,
             started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
     }
 
+    private val messagesCache = ConcurrentHashMap<String, StateFlow<List<Message>>>()
+    private val messageCache = ConcurrentHashMap<String, StateFlow<Message?>>()
+    private val unreadCache = ConcurrentHashMap<String, StateFlow<Int>>()
+
+    /**
+     * Hot StateFlow of all mailboxes.
+     */
+    fun mailboxes(): StateFlow<List<Mailbox>> = mailboxesFlow
+
     /**
      * Hot StateFlow of messages for a given mailbox sorted newest first.
      */
     fun messages(mailboxHex: String): StateFlow<List<Message>> {
-        return source.messages(mailboxHex).stateIn(
-            scope = scope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptyList()
-        )
+        return messagesCache.getOrPut(mailboxHex) {
+            source.messages(mailboxHex).stateIn(
+                scope = scope,
+                started = SharingStarted.Eagerly,
+                initialValue = emptyList()
+            )
+        }
     }
 
     /**
      * Hot StateFlow of a single message by hex.
      */
     fun message(hex: String): StateFlow<Message?> {
-        return source.message(hex).stateIn(
-            scope = scope,
-            started = SharingStarted.Eagerly,
-            initialValue = source.getMessage(hex)
-        )
+        return messageCache.getOrPut(hex) {
+            source.message(hex).stateIn(
+                scope = scope,
+                started = SharingStarted.Eagerly,
+                initialValue = source.getMessage(hex)
+            )
+        }
     }
 
     /**
      * Hot StateFlow of unread count for a given mailbox.
      */
     fun unread(mailboxHex: String): StateFlow<Int> {
-        return source.messages(mailboxHex)
-            .map { list -> list.count { !it.seen() } }
-            .stateIn(
-                scope = scope,
-                started = SharingStarted.Eagerly,
-                initialValue = 0
-            )
+        return unreadCache.getOrPut(mailboxHex) {
+            source.messages(mailboxHex)
+                .map { list -> list.count { !it.seen() } }
+                .stateIn(
+                    scope = scope,
+                    started = SharingStarted.Eagerly,
+                    initialValue = 0
+                )
+        }
     }
 
     /**

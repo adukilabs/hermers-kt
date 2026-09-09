@@ -31,7 +31,7 @@ object Envelope {
      * Decrypts AES-256-GCM envelope ciphertext and verifies AEAD authentication tag.
      */
     fun decrypt(cipherText: ByteArray, key: SecretKey): ByteArray {
-        require(cipherText.size > IV_LENGTH) { "Ciphertext too short to contain IV" }
+        require(cipherText.size >= IV_LENGTH + (TAG_LENGTH / 8)) { "Ciphertext too short to contain IV and tag" }
         val iv = ByteArray(IV_LENGTH)
         System.arraycopy(cipherText, 0, iv, 0, IV_LENGTH)
 

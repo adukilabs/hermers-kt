@@ -2,6 +2,7 @@ package pro.aduki.hermes.net.http
 
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONObject
 import pro.aduki.hermes.core.errors.HermesException
 import pro.aduki.hermes.core.models.Identity
 
@@ -43,24 +44,26 @@ class Whoami(
     }
 
     private fun parse(json: String): Identity {
-        // Minimal fast zero-dependency JSON extraction for identity fields
-        val user = extract(json, "user") ?: ""
-        val tenant = extract(json, "tenant") ?: ""
-        val tier = extract(json, "tier") ?: ""
-        val owner = json.contains("\"owner\":true") || json.contains("\"owner\": true")
+        val obj = JSONObject(json)
+        val user = obj.optString("user", "")
+        val tenant = obj.optString("tenant", "")
+        val tier = obj.optString("tier", "")
+        val owner = obj.optBoolean("owner", false)
+
+        val scopesArray = obj.optJSONArray("scopes")
+        val scopes = if (scopesArray != null) {
+            (0 until scopesArray.length()).map { scopesArray.getString(it) }
+        } else {
+            emptyList()
+        }
 
         return Identity(
             user = user,
             tenant = tenant,
             owner = owner,
-            scopes = emptyList(),
+            scopes = scopes,
             tier = tier
         )
-    }
-
-    private fun extract(json: String, key: String): String? {
-        val pattern = "\"$key\"\\s*:\\s*\"([^\"]+)\"".toRegex()
-        return pattern.find(json)?.groupValues?.get(1)
     }
 
     companion object {

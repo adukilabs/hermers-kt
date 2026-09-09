@@ -59,5 +59,23 @@ class WhoamiTest {
             whoami.resolve()
         }
     }
+
+    @Test
+    fun testScopesParsedCorrectly() {
+        val json = """
+            {
+                "user": "usr_test",
+                "tenant": "ten_test",
+                "scopes": ["mail:read", "mail:write", "contacts:read"]
+            }
+        """.trimIndent()
+        server.enqueue(MockResponse().setResponseCode(200).setBody(json))
+
+        val client = OkHttpClient()
+        val whoami = Whoami(client, server.url("/").toString())
+        val identity = whoami.resolve()
+
+        assertEquals(listOf("mail:read", "mail:write", "contacts:read"), identity.scopes)
+    }
 }
 

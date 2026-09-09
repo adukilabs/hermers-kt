@@ -48,4 +48,12 @@ class EnvelopeTest {
             Envelope.decrypt(encrypted, master)
         }
     }
+
+    @Test
+    fun testTruncatedCiphertextRejection() {
+        val master = provider.get("test_key_short")
+        assertThrows(IllegalArgumentException::class.java) {
+            Envelope.decrypt(ByteArray(20), master)
+        }
+    }
 }

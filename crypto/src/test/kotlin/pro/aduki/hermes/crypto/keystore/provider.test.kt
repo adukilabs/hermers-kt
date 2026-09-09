@@ -21,5 +21,12 @@ class ProviderTest {
         assertNotNull(key)
         assertEquals(32, key.encoded.size) // 256 bits = 32 bytes
     }
+
+    @Test
+    fun testKeyPersistenceForSameAlias() {
+        val key1 = provider.get("alias_persistent")
+        val key2 = provider.get("alias_persistent")
+        assertEquals(key1, key2)
+    }
 }
 

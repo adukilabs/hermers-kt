@@ -60,6 +60,7 @@ class Ring<T : Any>(capacity: Int = 1024) {
     fun empty(): Boolean = head.get() == tail.get()
 
     private fun nextPowerOfTwo(value: Int): Int {
+        if (value <= 1) return 1
         var v = value - 1
         v = v or (v ushr 1)
         v = v or (v ushr 2)
