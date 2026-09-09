@@ -33,13 +33,19 @@ jobs:
       - name: test
         run: gradle test
 
-      - name: publish
+      - name: github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-        run: gradle publish bundle
+        run: gradle publishMavenPublicationToGithubRepository || echo "GitHub packages already published"
+
+      - name: bundle
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: gradle bundle
 
       - name: central
         env:
