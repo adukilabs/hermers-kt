@@ -24,3 +24,4 @@ data class Service(
     var active: Boolean = true,
     var updated: Long = 0L
 )
+

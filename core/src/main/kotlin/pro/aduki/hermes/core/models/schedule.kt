@@ -40,3 +40,4 @@ data class ServiceRecord(
     val increment: Int = 15,
     val active: Boolean = true
 )
+

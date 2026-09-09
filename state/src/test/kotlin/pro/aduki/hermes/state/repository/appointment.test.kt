@@ -48,3 +48,4 @@ class AppointmentTest {
         assertEquals("a2", single!!.hex)
     }
 }
+

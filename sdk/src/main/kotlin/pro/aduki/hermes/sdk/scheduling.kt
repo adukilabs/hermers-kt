@@ -97,3 +97,4 @@ class Scheduling internal constructor(
         return net?.book(slug, start, end, guestName, guestEmail, answers)
     }
 }
+

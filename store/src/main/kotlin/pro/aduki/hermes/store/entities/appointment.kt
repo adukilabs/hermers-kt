@@ -27,3 +27,4 @@ data class Appointment(
     var rescheduled: String = "",
     var updated: Long = 0L
 )
+

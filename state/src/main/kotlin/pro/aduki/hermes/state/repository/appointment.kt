@@ -74,3 +74,4 @@ class Appointment(
      */
     fun get(hex: String): AppointmentEntity? = source.get(hex)
 }
+

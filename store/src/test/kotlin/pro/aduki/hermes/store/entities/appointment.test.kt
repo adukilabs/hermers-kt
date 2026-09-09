@@ -46,3 +46,4 @@ class AppointmentTest {
         assertEquals(15, srv.buffer)
     }
 }
+

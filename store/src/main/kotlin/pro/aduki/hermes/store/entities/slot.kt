@@ -8,3 +8,4 @@ data class Slot(
     val end: String,
     val available: Boolean = true
 )
+
