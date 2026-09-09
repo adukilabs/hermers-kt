@@ -1,7 +1,7 @@
 # Hermes Android Kotlin SDK
 
 [![Documentation](https://img.shields.io/badge/docs-mdBook-blue.svg)](https://adukilabs.github.io/hermers-kt/)
-[![Maven Central](https://img.shields.io/badge/Maven%20Central-0.1.1-blue.svg)](https://central.sonatype.com/artifact/io.github.adukilabs/sdk)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-0.1.2-blue.svg)](https://central.sonatype.com/artifact/io.github.adukilabs/sdk)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-purple.svg)](https://kotlinlang.org)
 [![ObjectBox](https://img.shields.io/badge/ObjectBox-4.0.3-green.svg)](https://objectbox.io)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
@@ -31,7 +31,7 @@ Because `mavenCentral()` is enabled by default in Android projects, include the 
 ```kotlin
 // app/build.gradle.kts
 dependencies {
-    implementation("io.github.adukilabs:sdk:0.1.1")
+    implementation("io.github.adukilabs:sdk:0.1.2")
     implementation("io.objectbox:objectbox-android:4.0.3")
 }
 ```
@@ -50,7 +50,7 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.1")
+    implementation("com.github.adukilabs.hermers-kt:sdk:v0.1.2")
     implementation("io.objectbox:objectbox-android:4.0.3")
 }
 ```
