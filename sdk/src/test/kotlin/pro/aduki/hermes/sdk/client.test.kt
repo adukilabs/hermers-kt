@@ -12,10 +12,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import pro.aduki.hermes.state.repository.ContactSource
-import pro.aduki.hermes.state.repository.Identity
+import pro.aduki.hermes.core.models.Identity
 import pro.aduki.hermes.state.repository.MailSource
-import pro.aduki.hermes.state.repository.Tokens
+import pro.aduki.hermes.core.models.Tokens
+
 import pro.aduki.hermes.store.entities.Contact as ContactEntity
 import pro.aduki.hermes.store.entities.Mailbox
 import pro.aduki.hermes.store.entities.Message

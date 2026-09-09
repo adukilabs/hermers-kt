@@ -10,9 +10,10 @@ import pro.aduki.hermes.core.config.Options
 import pro.aduki.hermes.net.http.Client as HttpClient
 import pro.aduki.hermes.net.http.Login
 import pro.aduki.hermes.net.http.Whoami
-import pro.aduki.hermes.state.repository.Identity
+import pro.aduki.hermes.core.models.Identity
+import pro.aduki.hermes.core.models.Tokens
 import pro.aduki.hermes.state.repository.Session
-import pro.aduki.hermes.state.repository.Tokens
+
 import pro.aduki.hermes.sync.engine.Contact as ContactEngine
 import pro.aduki.hermes.sync.engine.Mailbox as MailboxEngine
 import pro.aduki.hermes.sync.outbox.Manager

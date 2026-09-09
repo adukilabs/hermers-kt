@@ -62,5 +62,9 @@ class Whoami(
         val pattern = "\"$key\"\\s*:\\s*\"([^\"]+)\"".toRegex()
         return pattern.find(json)?.groupValues?.get(1)
     }
+
+    companion object {
+        fun resolve(client: OkHttpClient, endpoint: String): Identity = Whoami(client, endpoint).resolve()
+    }
 }
 

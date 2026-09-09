@@ -11,14 +11,13 @@ import pro.aduki.hermes.core.models.Identity
 typealias Identity = pro.aduki.hermes.core.models.Identity
 
 
+import pro.aduki.hermes.core.models.Tokens
+
 /**
- * Tokens models interactive access and refresh session tokens.
+ * Type alias for Tokens.
  */
-data class Tokens(
-    val token: String = "",
-    val refresh: String = "",
-    val expires: String = ""
-)
+typealias Tokens = pro.aduki.hermes.core.models.Tokens
+
 
 /**
  * Session manages active identity and token StateFlows.

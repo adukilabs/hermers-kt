@@ -7,15 +7,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import pro.aduki.hermes.core.errors.HermesException
 import java.io.IOException
+import pro.aduki.hermes.core.models.Tokens
 
 /**
- * Tokens represents access and refresh session tokens.
+ * Type alias for Tokens.
  */
-data class Tokens(
-    val token: String = "",
-    val refresh: String = "",
-    val expires: String = ""
-)
+typealias Tokens = pro.aduki.hermes.core.models.Tokens
+
 
 /**
  * Login handles interactive credential authentication, TOTP 2FA, session refresh, and logout.

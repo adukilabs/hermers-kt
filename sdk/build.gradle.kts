@@ -12,6 +12,8 @@ dependencies {
 
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.coroutines.core)
+    implementation(libs.okhttp)
+
 
     testImplementation(libs.junit)
 }
